@@ -1,8 +1,10 @@
 # Event Management Application
 
-A complete, production-grade Event Management application featuring an in-memory Python FastAPI REST API and a React TypeScript Single Page Application built with Vite.
+A complete, production-grade Event Management application featuring an in-memory Python FastAPI REST API and a React 19 TypeScript Single Page Application built with Vite.
 
-![Event Management UI](docs/screenshots/events.png)
+| Desktop Event Directory (Light) | Desktop Event Directory (Dark) |
+|---|---|
+| ![Event Directory Light](docs/screenshots/events.png) | ![Event Directory Dark](docs/screenshots/events-dark.png) |
 
 ## Overview
 
@@ -15,22 +17,38 @@ This application fulfills all requirements of the Event Management assessment:
   - Prevention of duplicate registrations for the same user on an event (`ALREADY_REGISTERED`).
   - Rejection of capacity reductions below the current number of registered attendees (`CAPACITY_BELOW_REGISTRATIONS`).
   - Cascading deletion of registrations upon event deletion.
-- **In-Memory Storage**: Thread-safe in-memory dictionaries synchronized with a shared `threading.Lock`.
+- **In-Memory Storage**: Thread-safe in-memory dictionaries synchronized with a shared `threading.Lock`. All business data resides in Python process memory and resets on restart.
+- **Appearance & Dark Mode**: System, Light, and Dark preferences with persistence in `localStorage` under `event-management:theme`. Client-side appearance is decoupled from backend memory. Inline head script prevents flash of unstyled theme (FOUC). Form inputs, selected attendee identities, and modal dialogs remain active across appearance changes.
 - **Consistent Error Contract**: Standardized JSON error envelope for all failures (400, 404, 409, 422, 500).
-- **Timezone Awareness**: Full UTC normalization on backend with browser timezone conversion in the frontend.
-- **Modern Accessible UI (Mobbin Patterns)**: Inspired by patterns from Luma, Eventbrite, Partiful, and Circle, including calendar date tiles, capacity gauges, occupancy indicators, category filtering, avatar attendee rosters, and interactive demo identity controls. See [docs/ui-design.md](docs/ui-design.md) for full design documentation.
+- **Timezone Awareness**: Full UTC normalization on backend with browser timezone conversion in frontend. Editing an event preserves untouched date instants without seconds truncation.
+- **Modern Accessible UI (Mobbin Patterns)**: Inspired by patterns from Luma, Eventbrite, Partiful, and Circle, including calendar date tiles, capacity gauges, occupancy indicators, category filtering, avatar attendee rosters, and interactive demo identity controls. See [docs/ui-design.md](docs/ui-design.md) and [DESIGN.md](DESIGN.md).
 
-| Desktop Event Directory | Mobile Event Directory |
+## Interface Screenshots
+
+| Desktop Event Detail (Light) | Desktop Event Detail (Dark) |
 |---|---|
-| ![Event Directory Desktop](docs/screenshots/events.png) | ![Event Directory Mobile](docs/screenshots/events-mobile.png) |
+| ![Event Detail Light](docs/screenshots/event-detail.png) | ![Event Detail Dark](docs/screenshots/event-detail-dark.png) |
 
-| Desktop Event Detail | Mobile Event Detail |
+| Mobile Directory (Light & Dark) | Mobile Detail (Light & Dark) |
 |---|---|
-| ![Event Detail Desktop](docs/screenshots/event-detail.png) | ![Event Detail Mobile](docs/screenshots/event-detail-mobile.png) |
+| ![Directory Mobile Light](docs/screenshots/events-mobile.png) ![Directory Mobile Dark](docs/screenshots/events-dark-mobile.png) | ![Detail Mobile Light](docs/screenshots/event-detail-mobile.png) ![Detail Mobile Dark](docs/screenshots/event-detail-dark-mobile.png) |
 
-| Create / Edit Event Form |
+| Create and Edit Event Form (Light & Dark) |
 |---|
-| ![Event Form Desktop](docs/screenshots/event-form.png) |
+| ![Form Light](docs/screenshots/event-form.png) |
+| ![Form Dark](docs/screenshots/event-form-dark.png) |
+
+---
+
+## Agent Readiness and Design System
+
+The repository provides documentation tailored for human contributors and automated coding agents:
+- [AGENTS.md](AGENTS.md): Core architectural invariants, concurrency locks, volatile memory rules, environment setup, and change routing.
+- [DESIGN.md](DESIGN.md): Visual design system, semantic color tokens, light/dark palettes, WCAG AA contrast measurements, and accessibility standards.
+- [.agents/skills/event-management-quality/SKILL.md](.agents/skills/event-management-quality/SKILL.md): Local verification skill for validating business rules, concurrency race conditions, and appearance stability.
+- [docs/review-findings.md](docs/review-findings.md): Complete audit log and root cause disposition for issues F01 through F12.
+- [docs/scenario-coverage.md](docs/scenario-coverage.md): Comprehensive scenario coverage matrix mapping every edge case to its automated test proof.
+- [docs/decisions.md](docs/decisions.md): Architecture Decision Records (ADR-001 through ADR-007).
 
 ---
 
@@ -48,28 +66,30 @@ The application was built and validated against the following runtimes:
 
 ```text
 event-management/
+├── AGENTS.md                           # Autonomous coding agent guidelines & architectural invariants
+├── DESIGN.md                           # Design system, semantic tokens, and dark mode architecture
+├── README.md                           # Project documentation & execution guide
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                      # GitHub Actions CI workflow (Pytest, Ruff, ESLint, Typecheck, Build)
+│       └── ci.yml                      # CI workflow (Pytest, Ruff, ESLint, Typecheck, Build)
+├── .agents/
+│   └── skills/
+│       └── event-management-quality/   # Local verification and quality audit skill
+│           ├── SKILL.md
+│           └── scripts/
+│               └── verify_quality.sh   # Reusable quality verification runner
 ├── docs/
-│   ├── decisions.md                    # Architecture and implementation decisions
+│   ├── decisions.md                    # Architecture Decision Records (ADR-001 to ADR-007)
 │   ├── demo.md                         # Detailed step-by-step demonstration walkthrough
-│   ├── review-findings.md              # Hardening log and root-cause disposition for F01-F12
+│   ├── review-findings.md              # Review audit log for F01 to F12
 │   ├── scenario-coverage.md            # Evidence-backed scenario coverage matrix
 │   ├── ui-design.md                    # Mobbin design research, patterns, and decisions
-│   └── screenshots/
-│       ├── events.png                  # Screenshot of event directory (Desktop)
-│       ├── events-mobile.png           # Screenshot of event directory (Mobile)
-│       ├── event-detail.png            # Screenshot of event detail & attendee management (Desktop)
-│       ├── event-detail-mobile.png     # Screenshot of event detail & attendee management (Mobile)
-│       └── event-form.png              # Screenshot of create/edit event form (Desktop)
+│   └── screenshots/                    # Desktop & mobile captures in Light and Dark appearances
 ├── backend/
-│   ├── pyproject.toml                  # Backend project metadata, dependencies & tool configs
+│   ├── pyproject.toml                  # Backend project metadata & tool configs
 │   ├── requirements.txt                # Pinned production runtime dependencies
 │   ├── requirements-dev.txt            # Pinned development and testing dependencies
-│   ├── .env.example                    # Sample environment variables
 │   ├── app/
-│   │   ├── __init__.py
 │   │   ├── main.py                     # FastAPI app factory, CORS, exception handlers
 │   │   ├── models.py                   # Frozen dataclass domain entities
 │   │   ├── schemas.py                  # Pydantic v2 validation contracts & response schemas
@@ -78,10 +98,8 @@ event-management/
 │   │   ├── service.py                  # Atomic business logic & clock integration
 │   │   ├── seed.py                     # Startup demo data seeder (relative dates)
 │   │   └── api/
-│   │       ├── __init__.py
 │   │       └── events.py               # REST route handlers
 │   └── tests/
-│       ├── __init__.py
 │       ├── conftest.py                 # Pytest fixtures (fresh store, fake clock, TestClient)
 │       ├── test_health.py              # Health check & app isolation tests
 │       ├── test_service.py             # Business rule unit tests & schema validation tests
@@ -89,12 +107,10 @@ event-management/
 │       └── test_api.py                 # HTTP contract & status code tests
 └── frontend/
     ├── package.json                    # Scripts and dependencies (React 19, Vite, Vitest)
-    ├── package-lock.json               # Deterministic dependency tree
-    ├── .env.example                    # Frontend environment configuration
     ├── vite.config.ts                  # Vite & Vitest configuration
     ├── tsconfig.json                   # TypeScript configuration
     ├── eslint.config.js                # ESLint flat config
-    ├── index.html                      # HTML entrypoint
+    ├── index.html                      # HTML entrypoint with inline appearance bootstrap
     └── src/
         ├── api/
         │   ├── client.ts               # Resilient fetch client with error normalization
@@ -111,13 +127,12 @@ event-management/
         ├── utils/
         │   ├── avatar.ts               # Deterministic attendee avatar generation
         │   ├── date.ts                 # Timezone-aware date parsing and conversion utilities
-        │   └── date.test.ts            # Date utility unit tests
-        ├── App.tsx                     # React Router routes and header navigation
+        │   ├── theme.ts                # Theme preference, resolution, and useTheme hook
+        │   └── theme.test.ts           # Theme utility unit tests
+        ├── App.tsx                     # React Router routes, shell, and theme selector
+        ├── App.test.tsx                # App integration & theme state tests
         ├── main.tsx                    # React DOM entrypoint
-        ├── styles.css                  # Modern, accessible, responsive styling
-        ├── vite-env.d.ts               # Vite client environment types
-        └── test/
-            └── setup.ts                # Vitest & Jest DOM setup
+        └── styles.css                  # Semantic tokens for Light and Dark themes
 ```
 
 ---
@@ -135,7 +150,7 @@ event-management/
    python3 -m venv .venv
    source .venv/bin/activate
    ```
-3. Install pinned dependencies:
+3. Install dependencies:
    ```bash
    pip install -r requirements-dev.txt
    ```
@@ -175,6 +190,47 @@ Open `http://127.0.0.1:5173` in your browser.
 
 ---
 
+## Reusable Quality Verification
+
+To run the complete quality and regression test suite across backend and frontend in a single step:
+```bash
+./.agents/skills/event-management-quality/scripts/verify_quality.sh
+```
+
+### Backend Verification
+From `backend/` with virtual environment activated:
+```bash
+# Run unit, API contracts, edge validations, and barrier concurrency tests (68 tests)
+pytest -v
+
+# Run with demo seeding explicitly active to verify fixture isolation
+SEED_DEMO_DATA=true pytest -q
+
+# Run Ruff linter check
+ruff check .
+
+# Run Ruff code formatter check
+ruff format --check .
+```
+
+### Frontend Verification
+From `frontend/`:
+```bash
+# Run Vitest component, theme, and date tests (52 tests across 7 test suites)
+npm test
+
+# Run TypeScript typecheck
+npm run typecheck
+
+# Run ESLint check
+npm run lint
+
+# Run production build
+npm run build
+```
+
+---
+
 ## REST API Specification
 
 ### Endpoints
@@ -190,35 +246,6 @@ Open `http://127.0.0.1:5173` in your browser.
 | `GET` | `/api/events/{id}/registrations` | List attendees registered for event | `200 OK` | `404 EVENT_NOT_FOUND`, `422 VALIDATION_ERROR` |
 | `POST` | `/api/events/{id}/registrations` | Register attendee (`userId`) | `201 Created` (`Location`) | `404`, `409 EVENT_STARTED`, `409 ALREADY_REGISTERED`, `409 EVENT_FULL` |
 | `DELETE` | `/api/events/{id}/registrations/{userId}` | Unregister attendee | `204 No Content` | `404 EVENT_NOT_FOUND`, `422 VALIDATION_ERROR` |
-
-### Consistent Error Envelope
-
-All HTTP errors return a standardized envelope:
-```json
-{
-  "error": {
-    "code": "EVENT_FULL",
-    "message": "This event has reached capacity.",
-    "details": []
-  }
-}
-```
-
-Validation errors (HTTP 422) provide field-level details:
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Request validation failed.",
-    "details": [
-      {
-        "field": "title",
-        "message": "Title cannot be empty or whitespace only."
-      }
-    ]
-  }
-}
-```
 
 ---
 
@@ -240,7 +267,6 @@ curl -i -X POST http://127.0.0.1:8000/api/events \
     "maxCapacity": 2
   }'
 ```
-*Note the returned `201 Created` status and `Location: /api/events/{id}` header.*
 
 ### 3. List Events
 ```bash
@@ -260,7 +286,6 @@ curl -i -X POST http://127.0.0.1:8000/api/events/{eventId}/registrations \
   -H "Content-Type: application/json" \
   -d '{"userId": "attendee-001"}'
 ```
-*Returns `409 Conflict` with code `ALREADY_REGISTERED`.*
 
 ### 6. Fill Capacity and Attempt Overbooking (Observe 409 Conflict)
 ```bash
@@ -274,13 +299,11 @@ curl -i -X POST http://127.0.0.1:8000/api/events/{eventId}/registrations \
   -H "Content-Type: application/json" \
   -d '{"userId": "attendee-003"}'
 ```
-*Returns `409 Conflict` with code `EVENT_FULL`.*
 
 ### 7. Unregister an Attendee
 ```bash
 curl -i -X DELETE http://127.0.0.1:8000/api/events/{eventId}/registrations/attendee-001
 ```
-*Returns `204 No Content` with an empty body. Repeating this request also returns `204 No Content`.*
 
 ### 8. Update Event (Full PUT)
 ```bash
@@ -298,43 +321,6 @@ curl -i -X PUT http://127.0.0.1:8000/api/events/{eventId} \
 ```bash
 curl -i -X DELETE http://127.0.0.1:8000/api/events/{eventId}
 ```
-*Returns `204 No Content`. Event and all its registrations are deleted.*
-
----
-
-## Verification & Test Execution
-
-### Backend Verification
-From `backend/` with virtual environment activated:
-```bash
-# Run unit, API contracts, edge validations, and barrier concurrency tests (68 tests)
-pytest -v
-
-# Run with demo seeding explicitly active to verify fixture isolation
-SEED_DEMO_DATA=true pytest -q
-
-# Run Ruff linter check
-ruff check .
-
-# Run Ruff code formatter check
-ruff format --check .
-```
-
-### Frontend Verification
-From `frontend/`:
-```bash
-# Run Vitest component, routing, and date utility tests (26 tests across 5 test suites)
-npm run test
-
-# Run TypeScript typecheck
-npm run typecheck
-
-# Run ESLint check
-npm run lint
-
-# Run production build
-npm run build
-```
 
 ---
 
@@ -342,6 +328,7 @@ npm run build
 
 1. **In-Memory Volatility**: All event and registration data is stored in Python heap memory dictionaries. Restarting or reloading the server process resets all data.
 2. **Single-Worker Execution**: Because state is kept in memory, the backend must run on a single worker process (`--workers 1`). Multi-worker deployments would create isolated memory partitions.
-3. **Identity & Authentication**: Authentication and authorization are out of scope. The caller supplies an alphanumeric `userId` string (`1-64` characters `[A-Za-z0-9_-]`). The UI provides a Demo Attendee ID switcher to test multi-user scenarios.
-4. **Collection Pagination**: Events and registrations are unpaginated for this exercise. For large production deployments, cursor-based pagination and database indexing would be used.
-5. **Event Start Time**: Event `date` represents the start time instant. New registrations close once `date <= now`. Existing attendees may still unregister after the start time.
+3. **Storage Separation**: UI appearance preference persists in client `localStorage` under `event-management:theme` for user convenience. Event and registration data remains strictly in backend memory and is never persisted to disk.
+4. **Identity & Authentication**: Authentication and authorization are out of scope. The caller supplies an alphanumeric `userId` string (`1-64` characters `[A-Za-z0-9_-]`). The UI provides a Demo Attendee ID switcher to test multi-user scenarios.
+5. **Collection Pagination**: Events and registrations are unpaginated for this exercise. For large production deployments, cursor-based pagination and database indexing would be used.
+6. **Event Start Time**: Event `date` represents the start time instant. New registrations close once `date <= now`. Existing attendees may still unregister after the start time.

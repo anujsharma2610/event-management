@@ -18,7 +18,7 @@ export const EventListPage: React.FC = () => {
     setError(null)
     try {
       const response = await apiClient.getEvents(signal)
-      setEvents(response.items)
+      setEvents(response?.items ?? [])
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') return
       if (err instanceof ApiError) {

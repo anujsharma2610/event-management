@@ -61,3 +61,20 @@ This document records the UI design improvements made to the Event Management ap
 - Accessible names on all buttons and interactive controls.
 - Color contrast compliant with WCAG AA minimums (slate-800 text on white, emerald-700 on emerald-50, etc.).
 - Responsive breakpoints tested at mobile (375px), tablet (768px), and desktop (1280px).
+
+---
+
+## 4. Dark Mode Appearance and Semantic Design System
+
+The application implements a dedicated Dark Mode palette using semantic CSS variables, avoiding mechanical inversion or washed-out backgrounds:
+- **Canvas and Cards**: Dark canvas uses `#0b0f19` with elevated card surfaces at `#151c2c` and raised modal dialogs at `#1e293b`.
+- **Text Hierarchy**: Primary headings and copy use `#f8fafc` (14.5:1 contrast against surface), while secondary text uses `#94a3b8` (6.1:1 contrast).
+- **Brand and Interactive Elements**: Primary actions use `#6366f1` with high-contrast `#ffffff` text (4.7:1 contrast).
+- **Status Badges and Gauges**: Emerald `#6ee7b7` on dark green background (8.2:1 contrast), amber `#fcd34d` on dark amber background (9.4:1 contrast), and red `#fca5a5` on dark red background (7.6:1 contrast).
+- **FOUC Prevention**: Inline synchronous script in `frontend/index.html` resolves saved preferences or OS settings before initial paint.
+- **State Preservation**: Appearance changes modify document root attributes without remounting React router components, preserving dirty form inputs and attendee state.
+
+Captured screenshots in both appearances are cataloged in `docs/screenshots/`:
+- Directory: `events.png` (Light), `events-dark.png` (Dark), `events-mobile.png`, `events-dark-mobile.png`
+- Detail: `event-detail.png` (Light), `event-detail-dark.png` (Dark), `event-detail-mobile.png`, `event-detail-dark-mobile.png`
+- Form: `event-form.png` (Light), `event-form-dark.png` (Dark)

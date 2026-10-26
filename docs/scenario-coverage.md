@@ -179,3 +179,25 @@ This matrix documents the verification coverage for all business invariants, inp
 | **A11Y06**| Color contrast compliance | All buttons & badges | Audit text vs background contrast | All normal text achieves >= 4.5:1 ratio (amber updated) | `frontend/src/styles.css` | A11y | Covered | Contrast audited |
 | **A11Y07**| Viewport zoom and reflow | 320px to 1280px | Test 200% zoom and 390px mobile | Layout reflows into single column without horizontal scroll | `docs/screenshots/*-mobile.png` | A11y | Covered | CSS responsive design |
 | **A11Y08**| Reduced motion preferences | All animations | `@media (prefers-reduced-motion)` | Transitions and animations disabled or minimized | `frontend/src/styles.css` | A11y | Covered | CSS media query |
+
+---
+
+## 10. Dark Mode & Appearance Coverage (TH01–TH15)
+
+| ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
+|---|---|---|---|---|---|---|---|---|
+| **TH01** | First visit with light system setting | No stored preference | Load app when OS prefers light | System preference selected; data-theme resolves to light | `frontend/src/App.test.tsx::Scenario 1` | Component | Covered | Browser matchMedia |
+| **TH02** | First visit with dark system setting | No stored preference | Load app when OS prefers dark | System preference selected; data-theme resolves to dark | `frontend/src/App.test.tsx::Scenario 2` | Component | Covered | Browser matchMedia |
+| **TH03** | Explicit Light while system is dark | OS prefers dark | Select Light in appearance control | Light persisted to localStorage; data-theme resolves to light | `frontend/src/App.test.tsx::Scenario 3` | Component | Covered | Persisted in client |
+| **TH04** | Explicit Dark while system is light | OS prefers light | Select Dark in appearance control | Dark persisted to localStorage; data-theme resolves to dark | `frontend/src/App.test.tsx::Scenario 4` | Component | Covered | Persisted in client |
+| **TH05** | System changes while preference is System | Preference is System | OS preference switches from light to dark | data-theme automatically updates to dark | `frontend/src/App.test.tsx::Scenario 5` | Component | Covered | Media query listener |
+| **TH06** | System changes while preference is explicit | Preference is Light | OS preference switches from light to dark | data-theme remains light; explicit choice overrides OS | `frontend/src/App.test.tsx::Scenario 6` | Component | Covered | Explicit override |
+| **TH07** | Saved preference invalid or removed | Corrupted storage | Load app with invalid value in storage | Safely falls back to System preference | `frontend/src/App.test.tsx::Scenario 7` & `frontend/src/utils/theme.test.ts` | Unit | Covered | Validation fallback |
+| **TH08** | localStorage read/write throws | Quota or privacy mode | Trigger storage write exception | App remains interactive; appearance toggles for session | `frontend/src/App.test.tsx::Scenario 8` & `frontend/src/utils/theme.test.ts` | Unit | Covered | Session fallback |
+| **TH09** | Appearance changes with dirty form | Create/edit form | Type input, then change theme | All form inputs and untouched date instant preserved | `frontend/src/App.test.tsx::Scenario 9` | Component | Covered | No remount |
+| **TH10** | Appearance changes with attendee/modal state | Detail page modal open | Change demo attendee ID and open modal, toggle theme | Typed attendee ID and open modal dialog preserved | `frontend/src/App.test.tsx::Scenario 10` | Component | Covered | Preserved state |
+| **TH11** | Refresh with saved Dark | Preference is Dark | Page reload or fresh navigation | Synchronous head script applies dark theme before paint | `frontend/index.html` inline script | Shell | Covered | Zero FOUC |
+| **TH12** | Accessible Appearance control | App navbar | Keyboard navigation to theme select | Labeled native select, exposed value, retains focus | `frontend/src/App.test.tsx::Scenario 12` | Component | Covered | Accessible combobox |
+| **TH13** | Shared components in both palettes | Light and Dark modes | Measure foreground/background contrast | All normal copy achieves >= 4.5:1 contrast; large text >= 3.0:1 | `DESIGN.md` & `frontend/src/styles.css` | Design | Covered | WCAG AA contrast |
+| **TH14** | Listener lifecycle cleanup | Mounted shell | Unmount App component | Media query and storage event listeners removed cleanly | `frontend/src/App.test.tsx::Scenario 14` | Component | Covered | No memory leak |
+| **TH15** | Cross-tab synchronization | Two browser tabs | Tab B updates localStorage theme | Tab A updates active preference and resolved appearance | `frontend/src/App.test.tsx::Scenario 15` | Component | Covered | Storage event sync |

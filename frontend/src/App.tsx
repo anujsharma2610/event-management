@@ -3,8 +3,11 @@ import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { EventFormPage } from './pages/EventFormPage'
 import { EventListPage } from './pages/EventListPage'
+import { ThemePreference, useTheme } from './utils/theme'
 
 export const App: React.FC = () => {
+  const { preference, setTheme } = useTheme()
+
   return (
     <BrowserRouter>
       <div className="app-shell">
@@ -15,14 +18,36 @@ export const App: React.FC = () => {
               <span className="brand-text">EventFlow</span>
             </Link>
 
-            <nav className="navbar-nav">
-              <Link to="/" className="nav-link">
-                Events
-              </Link>
-              <Link to="/events/new" className="btn btn-sm btn-primary">
-                + New Event
-              </Link>
-            </nav>
+            <div className="navbar-actions">
+              <div className="theme-selector-wrap">
+                <label htmlFor="theme-select" className="theme-select-label">
+                  <span className="theme-icon" aria-hidden="true">
+                    {preference === 'dark' ? '🌙' : preference === 'light' ? '☀️' : '💻'}
+                  </span>
+                  <span className="sr-only">Theme appearance</span>
+                </label>
+                <select
+                  id="theme-select"
+                  className="theme-select"
+                  aria-label="Theme appearance"
+                  value={preference}
+                  onChange={(e) => setTheme(e.target.value as ThemePreference)}
+                >
+                  <option value="system">Theme: System</option>
+                  <option value="light">Theme: Light</option>
+                  <option value="dark">Theme: Dark</option>
+                </select>
+              </div>
+
+              <nav className="navbar-nav">
+                <Link to="/" className="nav-link">
+                  Events
+                </Link>
+                <Link to="/events/new" className="btn btn-sm btn-primary">
+                  + New Event
+                </Link>
+              </nav>
+            </div>
           </div>
         </header>
 

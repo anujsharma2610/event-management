@@ -28,8 +28,8 @@ This document records the architectural and design decisions for the Event Manag
 
 ## 4. Identity & User Handling
 - **Decision**: No user authentication, passwords, or persistent user accounts are implemented. Identity is caller-supplied via a `userId` string.
-- **Validation**: Trimmed, non-empty, 1–64 characters matching regex `^[A-Za-z0-9_-]+$`. Case is preserved.
-- **Frontend Demo Identity**: The frontend provides a clearly labeled "Demo Attendee ID" input defaulting to `attendee-001`, allowing reviewers to simulate multiple attendees registering and unregistering.
+- **Validation**: Trimmed, non-empty, 1 to 64 characters matching regex `^[A-Za-z0-9_-]+$`. Case is normalized to lowercase.
+- **Frontend Demo Identity**: The frontend provides a clearly labeled "Attendee Identity" input defaulting to `attendee-001`, allowing reviewers to simulate multiple attendees registering and unregistering.
 
 ## 5. Date & Timezone Handling
 - **Storage**: All event dates and audit timestamps are stored as timezone-aware UTC datetimes.
@@ -69,3 +69,11 @@ Following the deep review pass, the following implementation decisions were esta
 5. **Background Revalidation State Separation**: `EventDetailPage` separates initial loading (`isLoading = true` when no data is loaded) from background data revalidation (`isRefreshing = true`). Revalidations after mutations do not unmount attendee controls, preserving user input, typed demo identity, and visible mutation conflict banners.
 6. **Accessible Modal Dialog**: The delete confirmation modal implements standard WAI-ARIA dialog practices: autofocus on Cancel, focus containment (Tab/Shift+Tab wrapping), dismissal via Escape key, and focus restoration to the trigger button upon close.
 7. **Test Fixture Seed Isolation**: `create_app(seed_demo=False)` explicitly controls demo seeding, guaranteeing that setting `SEED_DEMO_DATA=true` in developer shell environments does not contaminate test fixtures or break test isolation.
+
+## 9. Dark Mode and Appearance Architecture
+
+1. **Three-State Preference Model**: The application supports System, Light, and Dark preferences. System defaults to the operating system setting via `window.matchMedia('(prefers-color-scheme: dark)')` and updates dynamically when the host OS appearance changes. Explicit Light or Dark choices override OS preferences until the user selects System again.
+2. **Decoupled Client Persistence**: User appearance preference is persisted in browser `localStorage` under `event-management:theme`. All backend event and registration data remains strictly in volatile process memory. If storage access throws (e.g. strict privacy modes or quota restrictions), the app degrades gracefully, maintaining the chosen appearance in session state.
+3. **Early Bootstrap Zero-FOUC Architecture**: To avoid an avoidable light flash when loading saved dark preferences, a small synchronous inline script in `frontend/index.html` inspects storage and media queries before stylesheet parsing and sets `data-theme="dark"` and `color-scheme: dark` immediately on the `<html>` document element.
+4. **Non-Destructive State Transitions**: Theme toggles modify attributes on `document.documentElement` without remounting the React component tree. Dirty form entries, untouched ISO date strings, active attendee identity, and open confirmation modals remain completely intact when switching themes.
+5. **Semantic Role Tokens**: Hardcoded surface and text colors were eliminated in favor of semantic CSS custom properties in `frontend/src/styles.css`. All token pairs satisfy WCAG 2.1 AA contrast requirements (> 4.5:1 for normal copy, > 3.0:1 for large copy and UI boundaries) across both palettes.

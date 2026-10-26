@@ -4,6 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Event Management</title>
+    <script>
+      (function () {
+        try {
+          var key = 'event-management:theme';
+          var saved = localStorage.getItem(key);
+          var isDark =
+            saved === 'dark' ||
+            ((!saved || saved === 'system') &&
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var resolved = isDark ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', resolved);
+          document.documentElement.style.colorScheme = resolved;
+        } catch (_) {
+          var fallbackDark =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var fallbackResolved = fallbackDark ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', fallbackResolved);
+          document.documentElement.style.colorScheme = fallbackResolved;
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
