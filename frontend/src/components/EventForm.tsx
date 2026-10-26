@@ -113,107 +113,160 @@ export const EventForm: React.FC<EventFormProps> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="event-form" noValidate>
+    <form onSubmit={handleSubmit} className="event-form-v2" noValidate>
       {errors.general && (
         <div className="alert alert-error" role="alert">
-          {errors.general}
+          <span className="alert-icon" aria-hidden="true">⚠️</span>
+          <span>{errors.general}</span>
         </div>
       )}
 
-      <div className="form-group">
-        <label htmlFor="event-title">
-          Title <span className="required">*</span>
-        </label>
-        <input
-          id="event-title"
-          type="text"
-          value={title}
-          maxLength={120}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Distributed Systems Architecture Summit"
-          aria-invalid={!!errors.title}
-          aria-describedby={errors.title ? 'event-title-error' : undefined}
-          disabled={isSubmitting}
-          required
-        />
-        {errors.title && (
-          <p id="event-title-error" className="field-error" role="alert">
-            {errors.title}
-          </p>
-        )}
-      </div>
+      {/* Section 1: Basic Information */}
+      <fieldset className="form-section">
+        <legend className="section-legend">
+          <span className="legend-step">1</span>
+          <div>
+            <h3>Basic Information</h3>
+            <p>Name your event and provide an agenda or summary.</p>
+          </div>
+        </legend>
 
-      <div className="form-group">
-        <label htmlFor="event-description">Description</label>
-        <textarea
-          id="event-description"
-          value={description}
-          maxLength={2000}
-          rows={4}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Detailed agenda or notes (up to 2,000 characters)..."
-          aria-invalid={!!errors.description}
-          aria-describedby={errors.description ? 'event-description-error' : undefined}
-          disabled={isSubmitting}
-        />
-        <span className="character-count">{description.length} / 2000</span>
-        {errors.description && (
-          <p id="event-description-error" className="field-error" role="alert">
-            {errors.description}
-          </p>
-        )}
-      </div>
-
-      <div className="form-group">
-        <label htmlFor="event-date">
-          Event Date & Time <span className="required">*</span>
-        </label>
-        <div className="timezone-badge" title="Input will be saved as UTC based on this timezone">
-          Timezone: <strong>{timezone}</strong> (local time)
+        <div className="form-group">
+          <label htmlFor="event-title">
+            Event Title <span className="required">*</span>
+          </label>
+          <input
+            id="event-title"
+            type="text"
+            value={title}
+            maxLength={120}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Distributed Systems Architecture Summit"
+            aria-invalid={!!errors.title}
+            aria-describedby={errors.title ? 'event-title-error' : undefined}
+            disabled={isSubmitting}
+            required
+          />
+          <div className="input-helper-row">
+            <span className="input-hint">Maximum 120 characters</span>
+            <span className="character-count">{title.trim().length} / 120</span>
+          </div>
+          {errors.title && (
+            <p id="event-title-error" className="field-error" role="alert">
+              {errors.title}
+            </p>
+          )}
         </div>
-        <input
-          id="event-date"
-          type="datetime-local"
-          value={localDate}
-          onChange={(e) => setLocalDate(e.target.value)}
-          aria-invalid={!!errors.date}
-          aria-describedby={errors.date ? 'event-date-error' : undefined}
-          disabled={isSubmitting}
-          required
-        />
-        {errors.date && (
-          <p id="event-date-error" className="field-error" role="alert">
-            {errors.date}
-          </p>
-        )}
-      </div>
 
-      <div className="form-group">
-        <label htmlFor="event-capacity">
-          Maximum Capacity <span className="required">*</span>
-        </label>
-        <input
-          id="event-capacity"
-          type="number"
-          min="1"
-          max="10000"
-          step="1"
-          value={maxCapacity}
-          onChange={(e) => setMaxCapacity(e.target.value)}
-          placeholder="1 - 10000"
-          aria-invalid={!!errors.maxCapacity}
-          aria-describedby={errors.maxCapacity ? 'event-capacity-error' : undefined}
-          disabled={isSubmitting}
-          required
-        />
-        {errors.maxCapacity && (
-          <p id="event-capacity-error" className="field-error" role="alert">
-            {errors.maxCapacity}
-          </p>
-        )}
-      </div>
+        <div className="form-group">
+          <label htmlFor="event-description">Event Description</label>
+          <textarea
+            id="event-description"
+            value={description}
+            maxLength={2000}
+            rows={4}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Detailed agenda, speaker notes, or meeting location details..."
+            aria-invalid={!!errors.description}
+            aria-describedby={errors.description ? 'event-description-error' : undefined}
+            disabled={isSubmitting}
+          />
+          <div className="input-helper-row">
+            <span className="input-hint">Optional, up to 2,000 characters</span>
+            <span className="character-count">{description.length} / 2000</span>
+          </div>
+          {errors.description && (
+            <p id="event-description-error" className="field-error" role="alert">
+              {errors.description}
+            </p>
+          )}
+        </div>
+      </fieldset>
 
-      <div className="form-actions">
+      {/* Section 2: Date & Time */}
+      <fieldset className="form-section">
+        <legend className="section-legend">
+          <span className="legend-step">2</span>
+          <div>
+            <h3>Date, Time & Timezone</h3>
+            <p>Specify the start instant. Registrations will close at this time.</p>
+          </div>
+        </legend>
+
+        <div className="timezone-callout">
+          <span className="timezone-globe-icon" aria-hidden="true">🌐</span>
+          <div className="timezone-callout-text">
+            <strong>Timezone: {timezone}</strong>
+            <p>
+              Dates entered in your local wall-clock time will be automatically converted to UTC
+              instants when saved.
+            </p>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="event-date">
+            Event Date & Time <span className="required">*</span>
+          </label>
+          <input
+            id="event-date"
+            type="datetime-local"
+            value={localDate}
+            onChange={(e) => setLocalDate(e.target.value)}
+            aria-invalid={!!errors.date}
+            aria-describedby={errors.date ? 'event-date-error' : undefined}
+            disabled={isSubmitting}
+            required
+          />
+          {errors.date && (
+            <p id="event-date-error" className="field-error" role="alert">
+              {errors.date}
+            </p>
+          )}
+        </div>
+      </fieldset>
+
+      {/* Section 3: Capacity & Reservation Limits */}
+      <fieldset className="form-section">
+        <legend className="section-legend">
+          <span className="legend-step">3</span>
+          <div>
+            <h3>Capacity & Reservation Limits</h3>
+            <p>Set the maximum number of attendee registrations allowed.</p>
+          </div>
+        </legend>
+
+        <div className="form-group">
+          <label htmlFor="event-capacity">
+            Maximum Capacity <span className="required">*</span>
+          </label>
+          <input
+            id="event-capacity"
+            type="number"
+            min="1"
+            max="10000"
+            step="1"
+            value={maxCapacity}
+            onChange={(e) => setMaxCapacity(e.target.value)}
+            placeholder="1 - 10000"
+            aria-invalid={!!errors.maxCapacity}
+            aria-describedby={errors.maxCapacity ? 'event-capacity-error' : undefined}
+            disabled={isSubmitting}
+            required
+          />
+          <span className="input-hint">
+            Must be a whole number between 1 and 10,000. When editing, capacity cannot be reduced below current attendee count.
+          </span>
+          {errors.maxCapacity && (
+            <p id="event-capacity-error" className="field-error" role="alert">
+              {errors.maxCapacity}
+            </p>
+          )}
+        </div>
+      </fieldset>
+
+      {/* Form Action Bar */}
+      <div className="form-actions-bar">
         <button
           type="button"
           onClick={onCancel}

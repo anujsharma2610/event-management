@@ -70,8 +70,8 @@ describe('EventDetailPage Component', () => {
     expect(screen.getByText(/Loading event details.../i)).toBeInTheDocument()
 
     expect(await screen.findByRole('heading', { name: /Distributed Systems Deep Dive/i })).toBeInTheDocument()
-    expect(screen.getByText('1 / 2')).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument() // remaining
+    expect(screen.getAllByText(/1 \/ 2/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('1').length).toBeGreaterThanOrEqual(1) // remaining
     expect(screen.getAllByText('attendee-001').length).toBeGreaterThanOrEqual(1)
   })
 
@@ -94,7 +94,7 @@ describe('EventDetailPage Component', () => {
     await screen.findByRole('heading', { name: /Distributed Systems Deep Dive/i })
 
     // Change Demo Attendee ID to attendee-002
-    const input = screen.getByLabelText(/Demo Attendee ID/i)
+    const input = screen.getByLabelText(/Attendee Identity/i)
     await user.clear(input)
     await user.type(input, 'attendee-002')
 
@@ -120,6 +120,6 @@ describe('EventDetailPage Component', () => {
     // Default demo attendee is attendee-001 which is in mockRegistrations
     const unregisterBtns = screen.getAllByRole('button', { name: /^Unregister$/i })
     expect(unregisterBtns.length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText(/is currently registered for this event/i)).toBeInTheDocument()
+    expect(screen.getByText(/is confirmed on the guest list/i)).toBeInTheDocument()
   })
 })

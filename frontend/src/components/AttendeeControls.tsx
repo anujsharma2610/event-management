@@ -25,6 +25,11 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
   const isPast = event.status === 'past'
   const isFull = event.status === 'full'
 
+  const occupancyPct = Math.min(
+    100,
+    Math.round((event.registrationCount / event.maxCapacity) * 100),
+  )
+
   const validateUserId = (id: string): boolean => {
     if (!id) {
       setValidationError('Attendee ID is required.')
@@ -79,13 +84,36 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
   }
 
   return (
-    <div className="attendee-controls-card">
-      <div className="attendee-controls-header">
-        <h3>Attendee Registration</h3>
-        <p className="demo-identity-hint">
-          <strong>Demo identity:</strong> Switch this ID to simulate different users registering or
-          unregistering.
-        </p>
+    <div className="attendee-registration-card">
+      <div className="card-top-header">
+        <h3 className="card-title">Registration & RSVP</h3>
+        <span
+          className={`badge ${
+            isPast ? 'badge-past' : isFull ? 'badge-full' : 'badge-upcoming'
+          }`}
+        >
+          {isPast ? 'CLOSED' : isFull ? 'SOLD OUT' : 'OPEN'}
+        </span>
+      </div>
+
+      {/* Capacity Gauge (Luma / Eventbrite Pattern) */}
+      <div className="capacity-gauge-box">
+        <div className="gauge-labels">
+          <span className="gauge-primary">
+            <strong>{event.remainingCapacity}</strong> seats remaining
+          </span>
+          <span className="gauge-total">
+            {event.registrationCount} / {event.maxCapacity} booked ({occupancyPct}%)
+          </span>
+        </div>
+        <div className="capacity-track">
+          <div
+            className={`capacity-fill ${
+              isFull ? 'fill-full' : isPast ? 'fill-past' : 'fill-upcoming'
+            }`}
+            style={{ width: `${occupancyPct}%` }}
+          ></div>
+        </div>
       </div>
 
       {errorMessage && (
@@ -94,12 +122,18 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
         </div>
       )}
 
-      <div className="attendee-action-box">
+      {/* Demo Identity Switcher Box */}
+      <div className="demo-identity-box">
         <div className="form-group">
-          <label htmlFor="demo-user-id">
-            Demo Attendee ID
+          <label htmlFor="demo-user-id" className="demo-label">
+            <span>Attendee Identity</span>
+            <span className="demo-badge">Interactive Demo</span>
           </label>
-          <div className="attendee-input-row">
+          <p className="demo-subtext">
+            Change this ID to test registering and unregistering as multiple attendees.
+          </p>
+
+          <div className="identity-input-group">
             <input
               id="demo-user-id"
               type="text"
@@ -143,33 +177,49 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
             </p>
           )}
         </div>
+      </div>
 
-        <div className="registration-status-guidance">
-          {isRegistered && (
-            <span className="status-indicator status-indicator-success">
-              ✓ Attendee <code>{trimmedId}</code> is currently registered for this event.
-            </span>
-          )}
+      {/* Contextual Status Guidance */}
+      <div className="status-guidance-card">
+        {isRegistered && (
+          <div className="guidance-banner guidance-registered">
+            <span className="guidance-icon" aria-hidden="true">✓</span>
+            <div>
+              <strong>You are registered</strong>
+              <p>Attendee <code>{trimmedId}</code> is confirmed on the guest list.</p>
+            </div>
+          </div>
+        )}
 
-          {!isRegistered && isPast && (
-            <span className="status-indicator status-indicator-disabled">
-              Registration is closed because this event has started or passed.
-            </span>
-          )}
+        {!isRegistered && isPast && (
+          <div className="guidance-banner guidance-closed">
+            <span className="guidance-icon" aria-hidden="true">🔒</span>
+            <div>
+              <strong>Registration Closed</strong>
+              <p>This event has already started or passed. No new registrations are accepted.</p>
+            </div>
+          </div>
+        )}
 
-          {!isRegistered && !isPast && isFull && (
-            <span className="status-indicator status-indicator-disabled">
-              Registration is closed because this event is at maximum capacity ({event.maxCapacity} seats).
-            </span>
-          )}
+        {!isRegistered && !isPast && isFull && (
+          <div className="guidance-banner guidance-full">
+            <span className="guidance-icon" aria-hidden="true">⚠️</span>
+            <div>
+              <strong>Event is at Capacity</strong>
+              <p>All {event.maxCapacity} seats have been reserved. Registration is closed.</p>
+            </div>
+          </div>
+        )}
 
-          {!isRegistered && !isPast && !isFull && (
-            <span className="status-indicator status-indicator-open">
-              Registration is open. {event.remainingCapacity} seat
-              {event.remainingCapacity === 1 ? '' : 's'} remaining.
-            </span>
-          )}
-        </div>
+        {!isRegistered && !isPast && !isFull && (
+          <div className="guidance-banner guidance-open">
+            <span className="guidance-icon" aria-hidden="true">🎟️</span>
+            <div>
+              <strong>Instant Confirmation</strong>
+              <p>Seats are available. Reserve your spot for this event above.</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

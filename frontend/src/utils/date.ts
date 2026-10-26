@@ -63,3 +63,20 @@ export function getBrowserTimezone(): string {
     return 'UTC'
   }
 }
+
+
+/**
+ * Returns formatted calendar tile components (month abbreviation, day of month, and weekday)
+ * in local timezone for visual date blocks.
+ */
+export function getDateTileParts(isoString: string): { month: string; day: string; weekday: string } {
+  if (!isoString) return { month: '', day: '', weekday: '' }
+  const date = new Date(isoString)
+  if (isNaN(date.getTime())) return { month: '', day: '', weekday: '' }
+
+  const month = date.toLocaleString(undefined, { month: 'short' }).toUpperCase()
+  const day = String(date.getDate())
+  const weekday = date.toLocaleString(undefined, { weekday: 'short' })
+
+  return { month, day, weekday }
+}

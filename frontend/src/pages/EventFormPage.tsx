@@ -89,7 +89,7 @@ export const EventFormPage: React.FC = () => {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container form-page-container">
       <div className="form-page-header">
         <Link to={isEditing && id ? `/events/${id}` : '/'} className="btn-back">
           ← {isEditing ? 'Back to Details' : 'Back to Events'}
@@ -102,7 +102,7 @@ export const EventFormPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="form-card">
+      <div className="form-card-v2">
         <EventForm
           initialValues={initialValues}
           isEditing={isEditing}

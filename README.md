@@ -18,9 +18,19 @@ This application fulfills all requirements of the Event Management assessment:
 - **In-Memory Storage**: Thread-safe in-memory dictionaries synchronized with a shared `threading.Lock`.
 - **Consistent Error Contract**: Standardized JSON error envelope for all failures (400, 404, 409, 422, 500).
 - **Timezone Awareness**: Full UTC normalization on backend with browser timezone conversion in the frontend.
-- **Accessible & Usable UI**: Loading, empty, and conflict error states with interactive demo identity switcher.
+- **Modern Accessible UI (Mobbin Patterns)**: Inspired by patterns from Luma, Eventbrite, Partiful, and Circle, including calendar date tiles, capacity gauges, occupancy indicators, category filtering, avatar attendee rosters, and interactive demo identity controls. See [docs/ui-design.md](docs/ui-design.md) for full design documentation.
 
-![Event Detail UI](docs/screenshots/event-detail.png)
+| Desktop Event Directory | Mobile Event Directory |
+|---|---|
+| ![Event Directory Desktop](docs/screenshots/events.png) | ![Event Directory Mobile](docs/screenshots/events-mobile.png) |
+
+| Desktop Event Detail | Mobile Event Detail |
+|---|---|
+| ![Event Detail Desktop](docs/screenshots/event-detail.png) | ![Event Detail Mobile](docs/screenshots/event-detail-mobile.png) |
+
+| Create / Edit Event Form |
+|---|
+| ![Event Form Desktop](docs/screenshots/event-form.png) |
 
 ---
 
@@ -44,9 +54,13 @@ event-management/
 ├── docs/
 │   ├── decisions.md                    # Architecture and implementation decisions
 │   ├── demo.md                         # Detailed step-by-step demonstration walkthrough
+│   ├── ui-design.md                    # Mobbin design research, patterns, and decisions
 │   └── screenshots/
-│       ├── events.png                  # Screenshot of event directory
-│       └── event-detail.png            # Screenshot of event detail & attendee management
+│       ├── events.png                  # Screenshot of event directory (Desktop)
+│       ├── events-mobile.png           # Screenshot of event directory (Mobile)
+│       ├── event-detail.png            # Screenshot of event detail & attendee management (Desktop)
+│       ├── event-detail-mobile.png     # Screenshot of event detail & attendee management (Mobile)
+│       └── event-form.png              # Screenshot of create/edit event form (Desktop)
 ├── backend/
 │   ├── pyproject.toml                  # Backend project metadata, dependencies & tool configs
 │   ├── requirements.txt                # Pinned production runtime dependencies
@@ -93,6 +107,7 @@ event-management/
         │   ├── EventDetailPage.test.tsx# Event detail component unit tests
         │   └── EventFormPage.tsx       # Routed create / edit container
         ├── utils/
+        │   ├── avatar.ts               # Deterministic attendee avatar generation
         │   ├── date.ts                 # Timezone-aware date parsing and conversion utilities
         │   └── date.test.ts            # Date utility unit tests
         ├── App.tsx                     # React Router routes and header navigation
