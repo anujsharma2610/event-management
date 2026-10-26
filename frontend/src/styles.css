@@ -1,4 +1,4 @@
-/* Event Management Design System & Stylesheet (Mobbin Inspired) */
+/* Event Management Design System & Stylesheet (Editorial Event Workspace) */
 
 :root {
   --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -86,12 +86,12 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --color-bg-page: #0b0f19;
-  --color-bg-surface: #151c2c;
-  --color-bg-surface-raised: #1e293b;
+  --color-bg-page: #090d16;
+  --color-bg-surface: #131926;
+  --color-bg-surface-raised: #182032;
   --color-bg-subtle: #1e293b;
   --color-bg-muted: #334155;
-  --color-bg-inset: #101624;
+  --color-bg-inset: #0e1420;
 
   --color-text-primary: #f8fafc;
   --color-text-secondary: #94a3b8;
@@ -134,21 +134,21 @@
   --color-danger-text: #fca5a5;
 
   /* Form Inputs */
-  --color-input-bg: #101624;
+  --color-input-bg: #0e1420;
   --color-input-border: #2e3d55;
   --color-input-text: #f8fafc;
   --color-input-placeholder: #64748b;
   --color-input-focus-ring: rgba(99, 102, 241, 0.25);
 
   /* Buttons */
-  --color-btn-secondary-bg: #1e293b;
+  --color-btn-secondary-bg: #182032;
   --color-btn-secondary-border: #3b4e68;
   --color-btn-secondary-text: #e2e8f0;
   --color-btn-secondary-hover-bg: #273549;
   --color-btn-secondary-hover-text: #ffffff;
 
   /* Overlays & Shadows */
-  --color-overlay-bg: rgba(0, 0, 0, 0.75);
+  --color-overlay-bg: rgba(0, 0, 0, 0.8);
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.35);
@@ -197,7 +197,18 @@ body {
   border-width: 0;
 }
 
-/* App Layout */
+/* Tabular Numerals for Data Scanning */
+.metric-num,
+.date-tile-day,
+.tab-count,
+.capacity-pct,
+.gauge-total,
+.detail-meta-date,
+.event-card-time-row {
+  font-variant-numeric: tabular-nums;
+}
+
+/* App Shell */
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -234,7 +245,9 @@ body {
 }
 
 .brand-icon {
-  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  color: var(--color-primary);
 }
 
 .navbar-actions {
@@ -243,7 +256,7 @@ body {
   gap: 1.25rem;
 }
 
-/* Appearance Selector */
+/* Theme Appearance Selector */
 .theme-selector-wrap {
   display: inline-flex;
   align-items: center;
@@ -320,13 +333,22 @@ body {
   max-width: 1180px;
   width: 100%;
   margin: 0 auto;
-  padding: 2.25rem 1.5rem;
+  padding: 2.5rem 1.5rem;
 }
 
 .page-container {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
+  gap: 2rem;
+}
+
+/* Typography Hierarchy */
+.page-heading {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--color-text-primary);
 }
 
 /* Buttons */
@@ -452,11 +474,10 @@ body {
 .btn-back {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  text-decoration: none;
-  color: var(--color-text-secondary);
-  font-weight: 500;
   font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
   transition: color var(--transition-fast);
 }
 
@@ -464,16 +485,18 @@ body {
   color: var(--color-primary);
 }
 
-/* Badges with Indicator Dot */
+/* Status Badges */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.25rem 0.65rem;
-  font-size: 0.75rem;
+  font-size: 0.775rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  padding: 0.2rem 0.6rem;
   border-radius: var(--border-radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: fit-content;
 }
 
 .badge-dot {
@@ -515,88 +538,64 @@ body {
 
 /* Calendar Date Tile (Luma Reference Pattern) */
 .date-tile {
+  width: 52px;
+  height: 56px;
+  background-color: var(--color-bg-inset);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--border-radius);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 56px;
-  background-color: var(--color-bg-surface);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  box-shadow: var(--shadow-xs);
+  text-align: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .date-tile-month {
-  width: 100%;
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
   font-size: 0.65rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  text-align: center;
-  padding: 0.15rem 0;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  width: 100%;
+  padding: 0.15rem 0;
 }
 
 .date-tile-day {
   font-size: 1.25rem;
   font-weight: 800;
-  color: var(--color-text-primary);
   line-height: 1.2;
-}
-
-.date-tile-lg {
-  width: 68px;
-  height: 74px;
-  border-radius: var(--border-radius-lg);
-}
-
-.date-tile-lg .date-tile-month {
-  font-size: 0.75rem;
-  padding: 0.25rem 0;
-}
-
-.date-tile-lg .date-tile-day {
-  font-size: 1.65rem;
+  color: var(--color-text-primary);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ---------------------------------------------------- */
-/* SCREEN 1: Event List Hero, Controls & Cards          */
+/* SCREEN 1: Event Directory                            */
 /* ---------------------------------------------------- */
 
-.event-list-hero {
+.directory-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: flex-end;
   flex-wrap: wrap;
   gap: 1.25rem;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
 }
 
-.hero-kicker {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-primary);
-  display: block;
-  margin-bottom: 0.25rem;
+.directory-header-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.event-list-hero h2 {
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  color: var(--color-text-primary);
-}
-
-.subtitle {
+.directory-subtitle {
   color: var(--color-text-secondary);
-  font-size: 0.95rem;
-  margin-top: 0.35rem;
+  font-size: 1rem;
 }
 
 .list-controls-bar {
@@ -664,7 +663,8 @@ body {
 }
 
 .search-icon {
-  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
   color: var(--color-text-tertiary);
 }
 
@@ -736,10 +736,10 @@ body {
 }
 
 .event-card-title {
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 700;
   line-height: 1.35;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .event-card-title a {
@@ -760,7 +760,7 @@ body {
 .event-card-description {
   font-size: 0.875rem;
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  line-height: 1.55;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -768,7 +768,6 @@ body {
   flex: 1;
 }
 
-/* Capacity Section with Visual Bar (Eventbrite Reference Pattern) */
 .capacity-section {
   display: flex;
   flex-direction: column;
@@ -781,6 +780,10 @@ body {
   justify-content: space-between;
   font-size: 0.8rem;
   color: var(--color-text-secondary);
+}
+
+.capacity-subcount {
+  color: var(--color-text-tertiary);
 }
 
 .capacity-pct {
@@ -823,13 +826,24 @@ body {
 }
 
 /* ---------------------------------------------------- */
-/* SCREEN 2: Event Detail Two-Column Layout (Luma)      */
+/* SCREEN 2: Event Details & Attendees                  */
 /* ---------------------------------------------------- */
 
 .detail-top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.refreshing-indicator {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
 }
 
 .event-detail-layout {
@@ -857,38 +871,34 @@ body {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
   border-radius: var(--border-radius-lg);
-  padding: 1.75rem;
+  padding: 2rem;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.detail-header-top {
-  display: flex;
   gap: 1.25rem;
-  align-items: flex-start;
 }
 
-.detail-title-group {
+.detail-header-meta {
   display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
 }
 
-.event-title-h1 {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: var(--color-text-primary);
-  letter-spacing: -0.025em;
-  line-height: 1.25;
-}
-
-.event-datetime-sub {
+.detail-meta-date {
   font-size: 0.95rem;
   color: var(--color-text-secondary);
 }
 
+.event-title-h1 {
+  font-size: clamp(2rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+/* Availability Summary Strip */
 .quick-metrics-row {
   display: flex;
   align-items: center;
@@ -914,7 +924,7 @@ body {
 }
 
 .metric-num {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: var(--color-text-primary);
 }
@@ -945,21 +955,15 @@ body {
   letter-spacing: -0.015em;
 }
 
-.section-subtitle {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  margin-top: 0.15rem;
-}
-
 .event-description-text {
-  font-size: 0.95rem;
-  line-height: 1.7;
+  font-size: 1rem;
+  line-height: 1.65;
   color: var(--color-text-primary);
   margin-top: 0.85rem;
   white-space: pre-wrap;
 }
 
-/* Attendee Roster Section */
+/* Attendee Roster */
 .roster-header-row {
   display: flex;
   justify-content: space-between;
@@ -969,8 +973,13 @@ body {
   margin-bottom: 1.25rem;
 }
 
-.roster-search-input input {
-  padding: 0.4rem 0.75rem;
+.roster-count-sub {
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+}
+
+.roster-search-input {
+  padding: 0.45rem 0.85rem;
   background-color: var(--color-input-bg);
   border: 1px solid var(--color-border-default);
   border-radius: var(--border-radius);
@@ -979,14 +988,15 @@ body {
   width: 220px;
 }
 
-.roster-search-input input::placeholder {
-  color: var(--color-input-placeholder);
+.roster-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 .roster-list {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .roster-item-card {
@@ -1005,30 +1015,23 @@ body {
   border-color: var(--color-border-strong);
 }
 
-.roster-item-card.selected-attendee {
-  background-color: var(--color-primary-light);
-  border-color: var(--color-primary-border);
-}
-
 .roster-user-info {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.attendee-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  color: #ffffff;
+.attendee-avatar-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius-sm);
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
   flex-shrink: 0;
-  box-shadow: var(--shadow-xs);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .attendee-text-meta {
@@ -1040,37 +1043,32 @@ body {
   font-family: inherit;
   font-weight: 700;
   color: var(--color-text-primary);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .attendee-registered-time {
-  font-size: 0.775rem;
+  font-size: 0.8rem;
   color: var(--color-text-secondary);
 }
 
-.empty-roster-box {
+.empty-roster-state {
   text-align: center;
   padding: 2.5rem 1rem;
+  color: var(--color-text-secondary);
 }
 
-.empty-roster-icon {
-  font-size: 2.25rem;
-  margin-bottom: 0.5rem;
-}
-
-.empty-roster-title {
+.empty-text {
   font-weight: 700;
   font-size: 1rem;
   color: var(--color-text-primary);
 }
 
-.empty-roster-desc {
+.empty-subtext {
   font-size: 0.875rem;
-  color: var(--color-text-secondary);
   margin-top: 0.25rem;
 }
 
-/* Sidebar Registration Card (Partiful / Luma) */
+/* Sidebar Registration Card */
 .attendee-registration-card {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
@@ -1089,7 +1087,7 @@ body {
 }
 
 .card-title {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-text-primary);
 }
@@ -1108,7 +1106,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .gauge-primary {
@@ -1119,49 +1117,32 @@ body {
   color: var(--color-text-secondary);
 }
 
-.demo-identity-box {
-  border-top: 1px solid var(--color-border-subtle);
-  padding-top: 1rem;
+.identity-form-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.demo-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.85rem;
+.form-label {
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: 0.15rem;
-}
-
-.demo-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--border-radius-full);
-}
-
-.demo-subtext {
-  font-size: 0.775rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 0.65rem;
 }
 
 .identity-input-group {
   display: flex;
   gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .identity-input-group input {
   flex: 1;
-  padding: 0.55rem 0.75rem;
+  padding: 0.6rem 0.85rem;
   background-color: var(--color-input-bg);
   border: 1px solid var(--color-input-border);
   border-radius: var(--border-radius);
   color: var(--color-input-text);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .identity-input-group input::placeholder {
@@ -1175,11 +1156,19 @@ body {
 
 .guidance-banner {
   display: flex;
-  gap: 0.65rem;
-  padding: 0.75rem 0.85rem;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
   border-radius: var(--border-radius);
   font-size: 0.85rem;
-  line-height: 1.4;
+  line-height: 1.45;
+}
+
+.guidance-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 0.35rem;
+  flex-shrink: 0;
 }
 
 .guidance-registered {
@@ -1188,10 +1177,18 @@ body {
   color: var(--color-success-text);
 }
 
+.guidance-registered .guidance-indicator {
+  background-color: var(--color-success);
+}
+
 .guidance-closed {
   background-color: var(--color-bg-subtle);
   border: 1px solid var(--color-border-default);
   color: var(--color-text-secondary);
+}
+
+.guidance-closed .guidance-indicator {
+  background-color: var(--color-text-tertiary);
 }
 
 .guidance-full {
@@ -1200,10 +1197,18 @@ body {
   color: var(--color-warning-text);
 }
 
+.guidance-full .guidance-indicator {
+  background-color: var(--color-warning);
+}
+
 .guidance-open {
   background-color: var(--color-primary-light);
   border: 1px solid var(--color-primary-border);
   color: var(--color-primary-text);
+}
+
+.guidance-open .guidance-indicator {
+  background-color: var(--color-primary);
 }
 
 /* Host Management Card */
@@ -1219,7 +1224,7 @@ body {
 }
 
 .management-subtext {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--color-text-secondary);
 }
 
@@ -1231,12 +1236,19 @@ body {
 }
 
 /* ---------------------------------------------------- */
-/* SCREEN 3: Create & Edit Form (Eventbrite / Circle)   */
+/* SCREEN 3 & 4: Create and Edit Event Forms            */
 /* ---------------------------------------------------- */
 
 .form-page-container {
-  max-width: 740px;
+  max-width: 760px;
   margin: 0 auto;
+}
+
+.form-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .form-card-v2 {
@@ -1254,43 +1266,32 @@ body {
 }
 
 .form-section {
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--border-radius-lg);
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  background-color: var(--color-bg-inset);
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
-.section-legend {
+.form-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.section-header {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0 0.5rem;
+  flex-direction: column;
+  gap: 0.2rem;
 }
 
-.legend-step {
-  width: 28px;
-  height: 28px;
-  background-color: var(--color-primary);
-  color: #ffffff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.section-legend h3 {
-  font-size: 1.1rem;
+.section-heading {
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--color-text-primary);
 }
 
-.section-legend p {
-  font-size: 0.8rem;
+.section-subtext {
+  font-size: 0.85rem;
   color: var(--color-text-secondary);
 }
 
@@ -1302,7 +1303,7 @@ body {
 
 .form-group label {
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--color-text-primary);
 }
 
@@ -1317,7 +1318,7 @@ body {
   border: 1px solid var(--color-input-border);
   border-radius: var(--border-radius);
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--color-input-text);
   background-color: var(--color-input-bg);
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
@@ -1349,36 +1350,32 @@ body {
 .input-helper-row {
   display: flex;
   justify-content: space-between;
-  font-size: 0.775rem;
+  font-size: 0.8rem;
   color: var(--color-text-tertiary);
   margin-top: 0.2rem;
 }
 
 .input-hint {
-  font-size: 0.775rem;
+  font-size: 0.8rem;
   color: var(--color-text-tertiary);
+  line-height: 1.4;
 }
 
 .field-error {
   color: var(--color-danger);
-  font-size: 0.825rem;
+  font-size: 0.85rem;
   font-weight: 600;
   margin-top: 0.2rem;
 }
 
 .timezone-callout {
-  display: flex;
-  gap: 0.75rem;
   background-color: var(--color-primary-light);
   border: 1px solid var(--color-primary-border);
   border-radius: var(--border-radius);
   padding: 0.85rem 1rem;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   color: var(--color-primary-text);
-}
-
-.timezone-globe-icon {
-  font-size: 1.25rem;
+  line-height: 1.45;
 }
 
 .form-actions-bar {
@@ -1389,7 +1386,11 @@ body {
   border-top: 1px solid var(--color-border-default);
 }
 
-/* Modals */
+/* ---------------------------------------------------- */
+/* SCREEN 5: Dialogs and Exceptional States             */
+/* ---------------------------------------------------- */
+
+/* Accessible Modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1431,7 +1432,7 @@ body {
   gap: 0.75rem;
 }
 
-/* State Cards */
+/* State Cards (Loading, Error, Empty, Not Found) */
 .state-card {
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border-default);
@@ -1446,8 +1447,32 @@ body {
   gap: 1rem;
 }
 
-.empty-icon {
-  font-size: 2.75rem;
+.state-card h3 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.state-card p {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  max-width: 440px;
+}
+
+.not-found-page {
+  padding: 2rem 0;
+}
+
+.not-found-state {
+  padding: 4rem 2rem;
+}
+
+.not-found-code {
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--color-text-muted);
+  letter-spacing: -0.04em;
 }
 
 .spinner {
@@ -1466,6 +1491,7 @@ body {
 .alert {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.65rem;
   padding: 0.85rem 1.15rem;
   border-radius: var(--border-radius);
@@ -1476,6 +1502,22 @@ body {
   background-color: var(--color-danger-bg);
   border: 1px solid var(--color-danger-border);
   color: var(--color-danger-text);
+}
+
+.alert-warning {
+  background-color: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 0.25rem;
 }
 
 .app-footer {
@@ -1507,8 +1549,9 @@ body {
     justify-content: space-between;
     width: 100%;
   }
-  .event-list-hero {
+  .directory-header {
     flex-direction: column;
+    align-items: flex-start;
   }
   .list-controls-bar {
     flex-direction: column;
@@ -1517,14 +1560,16 @@ body {
   .search-box {
     min-width: unset;
   }
-  .detail-header-top {
-    flex-direction: column;
-  }
   .quick-metrics-row {
     flex-direction: column;
     gap: 0.75rem;
   }
   .metric-divider {
     display: none;
+  }
+  .form-group input,
+  .form-group textarea,
+  .identity-input-group input {
+    font-size: 16px; /* Prevents auto-zoom on mobile Safari */
   }
 }

@@ -28,7 +28,7 @@ This document records the architectural and design decisions for the Event Manag
 
 ## 4. Identity & User Handling
 - **Decision**: No user authentication, passwords, or persistent user accounts are implemented. Identity is caller-supplied via a `userId` string.
-- **Validation**: Trimmed, non-empty, 1 to 64 characters matching regex `^[A-Za-z0-9_-]+$`. Case is normalized to lowercase.
+- **Validation**: Trimmed, non-empty, 1 to 64 characters matching regex `^[A-Za-z0-9_-]+$`. Case is preserved: `UserA` and `usera` are treated as distinct attendees.
 - **Frontend Demo Identity**: The frontend provides a clearly labeled "Attendee Identity" input defaulting to `attendee-001`, allowing reviewers to simulate multiple attendees registering and unregistering.
 
 ## 5. Date & Timezone Handling

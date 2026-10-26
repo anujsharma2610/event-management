@@ -26,7 +26,7 @@ Always run commands from their respective subdirectories.
   ```bash
   python3 -m venv .venv
   source .venv/bin/activate
-  pip install -r requirements.txt
+  pip install -r requirements-dev.txt
   ```
 - Run development server (single worker required):
   ```bash
@@ -47,9 +47,9 @@ Always run commands from their respective subdirectories.
 
 ### Frontend (`frontend/`)
 
-- Setup dependencies:
+- Setup dependencies with reproducible lockfile:
   ```bash
-  npm install
+  npm ci
   ```
 - Run development server:
   ```bash
@@ -76,19 +76,20 @@ Any agent making modifications must preserve these fundamental architectural inv
    All operations that check capacity or duplicates before mutating state must hold the repository lock for the entire read-check-mutate cycle. Never release the lock between reading remaining capacity and appending a registrant.
 3. Volatile In-Memory Storage:
    Backend data resets on process restart. Demo data seeds automatically when `SEED_DEMO_DATA=true`. Test fixtures must explicitly set `seed_demo=False` to maintain isolation.
-4. Injectable UTC Time:
-   All timestamps are stored and evaluated in UTC. Event status (`upcoming` vs `past`) depends on whether event date is strictly after `now()`. The store accepts an optional `now_fn` clock callback for deterministic testing.
-5. Identity Normalization:
-   Attendee `userId` values must be trimmed of leading/trailing whitespace and normalized to lowercase before registration lookup or insertion.
-6. Registration Rules:
-   - Duplicate registrations for the same user on the same event return HTTP 400.
-   - Registrations on full events return HTTP 400.
-   - Registrations on past events return HTTP 400.
-   - Unregistering a non-existent registrant returns HTTP 404.
+4. Injectable UTC Clock:
+   All timestamps are stored and evaluated in UTC. Event status (`upcoming` vs `past`) depends on whether event date is strictly after `clock()`. `EventService` accepts an injectable `clock: Callable[[], datetime]` callback (defaulting to `lambda: datetime.now(timezone.utc)`) for deterministic testing.
+5. Identity Normalization and Case Preservation:
+   Attendee `userId` values must be trimmed of leading and trailing whitespace. Case is preserved: `UserA` and `usera` represent distinct attendees. Allowed format is 1 to 64 alphanumeric characters, underscores, or hyphens (`^[A-Za-z0-9_-]+$`).
+6. Registration Rules and HTTP Status Codes:
+   - Duplicate registrations for the same user on the same event return HTTP 409 Conflict (`ALREADY_REGISTERED`).
+   - Registrations on full events return HTTP 409 Conflict (`EVENT_FULL`).
+   - Registrations on past events return HTTP 409 Conflict (`EVENT_STARTED`).
+   - Unregistering an attendee who is not currently registered returns HTTP 204 No Content when the event exists (idempotent unregister).
+   - If the event itself does not exist, all registration and unregistration endpoints return HTTP 404 Not Found (`EVENT_NOT_FOUND`).
 7. Defensive Copying:
    Queries must return defensive copies of event dictionaries and attendee lists to prevent caller mutations from polluting internal store state.
 8. Full PUT Semantics:
-   Updating an event via `PUT /api/events/{id}` replaces title, description, date, and max capacity. A capacity reduction below the existing registration count must be rejected with HTTP 400.
+   Updating an event via `PUT /api/events/{id}` replaces title, description, date, and max capacity. A capacity reduction below the existing registration count must be rejected with HTTP 409 Conflict (`CAPACITY_BELOW_REGISTRATIONS`).
 9. Theme Preference and Appearance:
    The UI supports three preferences: System, Light, and Dark. Appearance preference persists in `localStorage` under `event-management:theme`. Business data remains solely in backend memory. Switching appearance must never remount pages or discard dirty form inputs.
 
@@ -102,6 +103,8 @@ Consult these documents before modifying specific project areas:
   Read `DESIGN.md`. All UI colors must use semantic CSS tokens defined in `frontend/src/styles.css`.
 - Review Findings and Hardening:
   Read `docs/review-findings.md` and `docs/scenario-coverage.md`. Update corresponding test entries for any resolved issue.
+- Product Scenario Coverage (Free/Paid/Capacity):
+  Read `docs/product-scenario-audit.md`.
 - Quality Verification:
   Follow the local skill instructions at `.agents/skills/event-management-quality/SKILL.md`.
 
@@ -111,6 +114,6 @@ Before submitting code changes, execute and verify:
 1. Backend test suite (`pytest -q`) and linter (`ruff check .`).
 2. Frontend unit tests (`npm test`), typecheck (`npm run typecheck`), and production build (`npm run build`).
 3. Verification that untouched date instants and selected attendee state remain preserved across route transitions and appearance toggles.
-4. Update scenario documentation in `docs/scenario-coverage.md`.
+4. Update scenario documentation in `docs/scenario-coverage.md` and audit documentation in `docs/product-scenario-audit.md`.
 
 External publication or deployment must always follow explicit user instructions. Do not push to remote repositories or publish artifacts without authorization.

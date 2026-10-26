@@ -14,7 +14,23 @@ export const App: React.FC = () => {
         <header className="app-navbar">
           <div className="navbar-container">
             <Link to="/" className="navbar-brand">
-              <span className="brand-icon">📅</span>
+              <span className="brand-icon" aria-hidden="true">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </span>
               <span className="brand-text">EventFlow</span>
             </Link>
 
@@ -63,8 +79,9 @@ export const App: React.FC = () => {
             <Route
               path="*"
               element={
-                <div className="page-container">
-                  <div className="state-card error-state" role="alert">
+                <div className="page-container not-found-page">
+                  <div className="state-card not-found-state" role="alert">
+                    <span className="not-found-code">404</span>
                     <h3>Page Not Found</h3>
                     <p className="error-message">
                       The requested URL does not match any known event routes.
@@ -83,7 +100,7 @@ export const App: React.FC = () => {
 
         <footer className="app-footer">
           <div className="footer-container">
-            <p>Event Management API Assessment • In-Memory Storage • FastAPI & React</p>
+            <p>Event Management API Assessment | In-Memory Storage | FastAPI & React</p>
           </div>
         </footer>
       </div>

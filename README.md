@@ -47,6 +47,7 @@ The repository provides documentation tailored for human contributors and automa
 - [DESIGN.md](DESIGN.md): Visual design system, semantic color tokens, light/dark palettes, WCAG AA contrast measurements, and accessibility standards.
 - [.agents/skills/event-management-quality/SKILL.md](.agents/skills/event-management-quality/SKILL.md): Local verification skill for validating business rules, concurrency race conditions, and appearance stability.
 - [docs/review-findings.md](docs/review-findings.md): Complete audit log and root cause disposition for issues F01 through F12.
+- [docs/product-scenario-audit.md](docs/product-scenario-audit.md): Capacity and pricing scenario audit covering required versus optional extensions.
 - [docs/scenario-coverage.md](docs/scenario-coverage.md): Comprehensive scenario coverage matrix mapping every edge case to its automated test proof.
 - [docs/decisions.md](docs/decisions.md): Architecture Decision Records (ADR-001 through ADR-007).
 
@@ -81,6 +82,7 @@ event-management/
 ├── docs/
 │   ├── decisions.md                    # Architecture Decision Records (ADR-001 to ADR-007)
 │   ├── demo.md                         # Detailed step-by-step demonstration walkthrough
+│   ├── product-scenario-audit.md       # Capacity and pricing scenario classification audit
 │   ├── review-findings.md              # Review audit log for F01 to F12
 │   ├── scenario-coverage.md            # Evidence-backed scenario coverage matrix
 │   ├── ui-design.md                    # Mobbin design research, patterns, and decisions

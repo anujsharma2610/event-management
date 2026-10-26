@@ -124,20 +124,16 @@ export const EventForm: React.FC<EventFormProps> = ({
     <form onSubmit={handleSubmit} className="event-form-v2" noValidate>
       {errors.general && (
         <div className="alert alert-error" role="alert">
-          <span className="alert-icon" aria-hidden="true">⚠️</span>
           <span>{errors.general}</span>
         </div>
       )}
 
       {/* Section 1: Basic Information */}
-      <fieldset className="form-section">
-        <legend className="section-legend">
-          <span className="legend-step">1</span>
-          <div>
-            <h3>Basic Information</h3>
-            <p>Name your event and provide an agenda or summary.</p>
-          </div>
-        </legend>
+      <div className="form-section">
+        <div className="section-header">
+          <h2 className="section-heading">Basic Information</h2>
+          <p className="section-subtext">Name your event and provide an agenda or summary.</p>
+        </div>
 
         <div className="form-group">
           <label htmlFor="event-title">
@@ -189,20 +185,16 @@ export const EventForm: React.FC<EventFormProps> = ({
             </p>
           )}
         </div>
-      </fieldset>
+      </div>
 
       {/* Section 2: Date & Time */}
-      <fieldset className="form-section">
-        <legend className="section-legend">
-          <span className="legend-step">2</span>
-          <div>
-            <h3>Date, Time & Timezone</h3>
-            <p>Specify the start instant. Registrations will close at this time.</p>
-          </div>
-        </legend>
+      <div className="form-section">
+        <div className="section-header">
+          <h2 className="section-heading">Date, Time & Timezone</h2>
+          <p className="section-subtext">Specify the start instant. Registrations will close at this time.</p>
+        </div>
 
         <div className="timezone-callout">
-          <span className="timezone-globe-icon" aria-hidden="true">🌐</span>
           <div className="timezone-callout-text">
             <strong>Timezone: {timezone}</strong>
             <p>
@@ -232,17 +224,14 @@ export const EventForm: React.FC<EventFormProps> = ({
             </p>
           )}
         </div>
-      </fieldset>
+      </div>
 
-      {/* Section 3: Capacity & Reservation Limits */}
-      <fieldset className="form-section">
-        <legend className="section-legend">
-          <span className="legend-step">3</span>
-          <div>
-            <h3>Capacity & Reservation Limits</h3>
-            <p>Set the maximum number of attendee registrations allowed.</p>
-          </div>
-        </legend>
+      {/* Section 3: Capacity */}
+      <div className="form-section">
+        <div className="section-header">
+          <h2 className="section-heading">Capacity & Reservation Limits</h2>
+          <p className="section-subtext">Set the maximum number of attendee registrations allowed.</p>
+        </div>
 
         <div className="form-group">
           <label htmlFor="event-capacity">
@@ -256,7 +245,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             step="1"
             value={maxCapacity}
             onChange={(e) => setMaxCapacity(e.target.value)}
-            placeholder="1 - 10000"
+            placeholder="1 to 10000"
             aria-invalid={!!errors.maxCapacity}
             aria-describedby={errors.maxCapacity ? 'event-capacity-error' : undefined}
             disabled={isSubmitting}
@@ -271,7 +260,7 @@ export const EventForm: React.FC<EventFormProps> = ({
             </p>
           )}
         </div>
-      </fieldset>
+      </div>
 
       {/* Form Action Bar */}
       <div className="form-actions-bar">

@@ -3,8 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiClient, ApiError } from '../api/client'
 import { Event, RegistrationItem } from '../api/types'
 import { AttendeeControls } from '../components/AttendeeControls'
-import { getAvatarColor, getInitials } from '../utils/avatar'
-import { formatDisplayDate, getDateTileParts } from '../utils/date'
+import { formatDisplayDate } from '../utils/date'
 
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -207,8 +206,6 @@ export const EventDetailPage: React.FC = () => {
     )
   }
 
-  const dateTile = getDateTileParts(event.date)
-
   return (
     <div className="page-container">
       {/* Top Navigation Bar */}
@@ -229,14 +226,14 @@ export const EventDetailPage: React.FC = () => {
             title="Refresh event data from server"
             disabled={isRefreshing}
           >
-            🔄 Refresh
+            Refresh
           </button>
         </div>
       </div>
 
       {refreshError && (
-        <div className="alert alert-warning" role="alert" style={{ marginBottom: '1rem' }}>
-          <span>⚠️ {refreshError}</span>
+        <div className="alert alert-warning" role="alert">
+          <span>{refreshError}</span>
           <button
             onClick={() => setRefreshError(null)}
             className="btn-close"
@@ -247,38 +244,32 @@ export const EventDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Two-Column Responsive Layout (Luma Reference Pattern) */}
+      {/* Main Detail Grid Layout */}
       <div className="event-detail-layout">
         {/* Left Column: Event Information & Attendee Roster */}
         <div className="detail-main-column">
           <div className="detail-header-card">
-            <div className="detail-header-top">
-              <div className="date-tile date-tile-lg" aria-hidden="true">
-                <span className="date-tile-month">{dateTile.month}</span>
-                <span className="date-tile-day">{dateTile.day}</span>
-              </div>
-
-              <div className="detail-title-group">
-                <span
-                  className={`badge ${
-                    event.status === 'past'
-                      ? 'badge-past'
-                      : event.status === 'full'
-                        ? 'badge-full'
-                        : 'badge-upcoming'
-                  }`}
-                >
-                  <span className="badge-dot" aria-hidden="true"></span>
-                  {event.status.toUpperCase()}
-                </span>
-                <h1 className="event-title-h1">{event.title}</h1>
-                <p className="event-datetime-sub">
-                  📅 {formatDisplayDate(event.date)}
-                </p>
-              </div>
+            <div className="detail-header-meta">
+              <span
+                className={`badge ${
+                  event.status === 'past'
+                    ? 'badge-past'
+                    : event.status === 'full'
+                      ? 'badge-full'
+                      : 'badge-upcoming'
+                }`}
+              >
+                <span className="badge-dot" aria-hidden="true"></span>
+                {event.status === 'past' ? 'Past' : event.status === 'full' ? 'Full' : 'Upcoming'}
+              </span>
+              <span className="detail-meta-date">
+                {formatDisplayDate(event.date)}
+              </span>
             </div>
 
-            {/* Quick Metrics Bar */}
+            <h1 className="event-title-h1">{event.title}</h1>
+
+            {/* Compact Availability Summary Strip */}
             <div className="quick-metrics-row">
               <div className="quick-metric">
                 <span className="metric-caption">Booked</span>
@@ -302,7 +293,7 @@ export const EventDetailPage: React.FC = () => {
           {/* Description Section */}
           {event.description && (
             <section className="detail-content-card">
-              <h3 className="section-title">About this event</h3>
+              <h2 className="section-title">About this event</h2>
               <p className="event-description-text">{event.description}</p>
             </section>
           )}
@@ -311,7 +302,7 @@ export const EventDetailPage: React.FC = () => {
           <section className="detail-content-card roster-section">
             <div className="roster-header-row">
               <div>
-                <h3 className="section-title">Registered Attendees</h3>
+                <h2 className="section-title">Registered Attendees</h2>
                 <span className="roster-count-sub">
                   {registrations.length} participant{registrations.length === 1 ? '' : 's'} registered
                 </span>
@@ -321,7 +312,7 @@ export const EventDetailPage: React.FC = () => {
                 <div className="roster-search-wrap">
                   <input
                     type="search"
-                    placeholder="Filter roster..."
+                    placeholder="Filter attendees..."
                     value={rosterSearch}
                     onChange={(e) => setRosterSearch(e.target.value)}
                     className="roster-search-input"
@@ -332,8 +323,8 @@ export const EventDetailPage: React.FC = () => {
             </div>
 
             {rosterActionError && (
-              <div className="alert alert-error" role="alert" style={{ marginBottom: '1rem' }}>
-                <span>⚠️ {rosterActionError}</span>
+              <div className="alert alert-error" role="alert">
+                <span>{rosterActionError}</span>
                 <button
                   onClick={() => setRosterActionError(null)}
                   className="btn-close"
@@ -346,10 +337,9 @@ export const EventDetailPage: React.FC = () => {
 
             {registrations.length === 0 ? (
               <div className="empty-roster-state">
-                <span className="empty-icon" aria-hidden="true">👥</span>
                 <p className="empty-text">No attendees registered yet.</p>
                 <p className="empty-subtext">
-                  Be the first to join using the registration card on the right!
+                  Register the first attendee using the form on the right.
                 </p>
               </div>
             ) : filteredRegistrations.length === 0 ? (
@@ -359,19 +349,25 @@ export const EventDetailPage: React.FC = () => {
             ) : (
               <div className="roster-list">
                 {filteredRegistrations.map((attendee) => {
-                  const initials = getInitials(attendee.userId)
-                  const avatarBg = getAvatarColor(attendee.userId)
                   const isRemovingThis = unregisteringUserId === attendee.userId
 
                   return (
                     <div key={attendee.userId} className="roster-item-card">
                       <div className="roster-user-info">
-                        <div
-                          className="attendee-avatar"
-                          style={{ backgroundColor: avatarBg }}
-                          aria-hidden="true"
-                        >
-                          {initials}
+                        <div className="attendee-avatar-icon" aria-hidden="true">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
                         </div>
                         <div className="attendee-text-meta">
                           <span className="attendee-id-strong">
@@ -384,10 +380,12 @@ export const EventDetailPage: React.FC = () => {
                       </div>
 
                       <button
+                        type="button"
                         onClick={() => handleRosterUnregister(attendee.userId)}
                         className="btn btn-sm btn-ghost-danger"
                         disabled={isRemovingThis}
                         title={`Unregister attendee ${attendee.userId}`}
+                        aria-label={`Unregister attendee ${attendee.userId}`}
                       >
                         {isRemovingThis ? 'Removing...' : 'Unregister'}
                       </button>
@@ -399,7 +397,7 @@ export const EventDetailPage: React.FC = () => {
           </section>
         </div>
 
-        {/* Right Sidebar Column: Sticky Registration & Event Management */}
+        {/* Right Sidebar Column: Registration & Host Controls */}
         <aside className="detail-sidebar-column">
           {/* Attendee Controls & Registration */}
           <AttendeeControls
@@ -418,7 +416,7 @@ export const EventDetailPage: React.FC = () => {
 
             <div className="host-actions-list">
               <Link to={`/events/${event.id}/edit`} className="btn btn-secondary btn-block">
-                ✏️ Edit Event Details
+                Edit Event
               </Link>
               <button
                 ref={deleteTriggerRef}
@@ -427,7 +425,7 @@ export const EventDetailPage: React.FC = () => {
                 className="btn btn-danger-outline btn-block"
                 disabled={isDeleting}
               >
-                🗑️ Delete Event
+                Delete Event
               </button>
             </div>
           </div>
@@ -450,8 +448,8 @@ export const EventDetailPage: React.FC = () => {
               Are you sure you want to permanently delete <strong>{event.title}</strong>?
             </p>
             <div className="modal-warning">
-              ⚠️ This action is irreversible. All <strong>{registrations.length}</strong> attendee
-              registration{registrations.length === 1 ? '' : 's'} will also be deleted immediately.
+              This action cannot be undone. All <strong>{registrations.length}</strong> attendee{' '}
+              {registrations.length === 1 ? 'registration' : 'registrations'} will also be deleted immediately.
             </div>
             <div className="modal-actions">
               <button

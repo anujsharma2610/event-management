@@ -50,7 +50,7 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
     }
     if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) {
       setValidationError(
-        'Attendee ID must be 1-64 alphanumeric characters, underscores, or hyphens [A-Za-z0-9_-].',
+        'Attendee ID must be 1 to 64 alphanumeric characters, underscores, or hyphens [A-Za-z0-9_-].',
       )
       return false
     }
@@ -99,27 +99,42 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
   return (
     <div className="attendee-registration-card">
       <div className="card-top-header">
-        <h3 className="card-title">Registration & RSVP</h3>
+        <h2 className="card-title">Registration</h2>
         <span
           className={`badge ${
             isPast ? 'badge-past' : isFull ? 'badge-full' : 'badge-upcoming'
           }`}
         >
-          {isPast ? 'CLOSED' : isFull ? 'SOLD OUT' : 'OPEN'}
+          {isPast ? 'Closed' : isFull ? 'Full' : 'Open'}
         </span>
       </div>
 
-      {/* Capacity Gauge (Luma / Eventbrite Pattern) */}
+      {/* Capacity Progress Gauge */}
       <div className="capacity-gauge-box">
         <div className="gauge-labels">
           <span className="gauge-primary">
-            <strong>{event.remainingCapacity}</strong> seats remaining
+            {isPast ? (
+              <>Registration closed</>
+            ) : isFull ? (
+              <>Event full</>
+            ) : (
+              <>
+                <strong>{event.remainingCapacity}</strong> seats remaining
+              </>
+            )}
           </span>
           <span className="gauge-total">
-            {event.registrationCount} / {event.maxCapacity} booked ({occupancyPct}%)
+            {event.registrationCount} / {event.maxCapacity} ({occupancyPct}%)
           </span>
         </div>
-        <div className="capacity-track">
+        <div
+          className="capacity-track"
+          role="progressbar"
+          aria-valuenow={event.registrationCount}
+          aria-valuemin={0}
+          aria-valuemax={event.maxCapacity}
+          aria-label="Event capacity booked"
+        >
           <div
             className={`capacity-fill ${
               isFull ? 'fill-full' : isPast ? 'fill-past' : 'fill-upcoming'
@@ -135,15 +150,14 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
         </div>
       )}
 
-      {/* Demo Identity Switcher Box */}
-      <div className="demo-identity-box">
+      {/* Identity Input Group */}
+      <div className="identity-form-box">
         <div className="form-group">
-          <label htmlFor="demo-user-id" className="demo-label">
-            <span>Attendee Identity</span>
-            <span className="demo-badge">Interactive Demo</span>
+          <label htmlFor="demo-user-id" className="form-label">
+            Attendee ID
           </label>
-          <p className="demo-subtext">
-            Change this ID to test registering and unregistering as multiple attendees.
+          <p className="input-hint">
+            Enter an attendee ID to register or manage registration.
           </p>
 
           <div className="identity-input-group">
@@ -159,6 +173,7 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
               }}
               placeholder="e.g. attendee-001"
               disabled={isLoading}
+              aria-label="Attendee Identity"
               aria-invalid={!!validationError}
               aria-describedby={validationError ? 'user-id-error' : undefined}
             />
@@ -192,44 +207,44 @@ export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
         </div>
       </div>
 
-      {/* Contextual Status Guidance */}
+      {/* Status Guidance */}
       <div className="status-guidance-card">
         {isRegistered && (
           <div className="guidance-banner guidance-registered">
-            <span className="guidance-icon" aria-hidden="true">✓</span>
+            <div className="guidance-indicator" aria-hidden="true"></div>
             <div>
               <strong>You are registered</strong>
-              <p>Attendee <code>{trimmedId}</code> is confirmed on the guest list.</p>
+              <p>Attendee <code>{trimmedId}</code> is confirmed on the attendee roster.</p>
             </div>
           </div>
         )}
 
         {!isRegistered && isPast && (
           <div className="guidance-banner guidance-closed">
-            <span className="guidance-icon" aria-hidden="true">🔒</span>
+            <div className="guidance-indicator" aria-hidden="true"></div>
             <div>
-              <strong>Registration Closed</strong>
-              <p>This event has already started or passed. No new registrations are accepted.</p>
+              <strong>Registration closed</strong>
+              <p>This event has already started. No new registrations are accepted.</p>
             </div>
           </div>
         )}
 
         {!isRegistered && !isPast && isFull && (
           <div className="guidance-banner guidance-full">
-            <span className="guidance-icon" aria-hidden="true">⚠️</span>
+            <div className="guidance-indicator" aria-hidden="true"></div>
             <div>
-              <strong>Event is at Capacity</strong>
-              <p>All {event.maxCapacity} seats have been reserved. Registration is closed.</p>
+              <strong>Event is at capacity</strong>
+              <p>All {event.maxCapacity} seats have been reserved.</p>
             </div>
           </div>
         )}
 
         {!isRegistered && !isPast && !isFull && (
           <div className="guidance-banner guidance-open">
-            <span className="guidance-icon" aria-hidden="true">🎟️</span>
+            <div className="guidance-indicator" aria-hidden="true"></div>
             <div>
-              <strong>Instant Confirmation</strong>
-              <p>Seats are available. Reserve your spot for this event above.</p>
+              <strong>Seats available</strong>
+              <p>{event.remainingCapacity} spots remaining for this event.</p>
             </div>
           </div>
         )}

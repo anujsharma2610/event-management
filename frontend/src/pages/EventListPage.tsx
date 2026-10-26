@@ -92,21 +92,20 @@ export const EventListPage: React.FC = () => {
 
   return (
     <div className="page-container">
-      {/* Hero Header */}
-      <div className="event-list-hero">
-        <div className="hero-content">
-          <span className="hero-kicker">Event Directory</span>
-          <h2>Explore & Manage Events</h2>
-          <p className="subtitle">
-            Schedule gatherings, track seat reservations, and manage attendee rosters.
+      {/* Directory Header */}
+      <div className="directory-header">
+        <div className="directory-header-content">
+          <h1 className="page-heading">Events</h1>
+          <p className="directory-subtitle">
+            {events.length === 1 ? '1 event scheduled' : `${events.length} events scheduled`}
           </p>
         </div>
         <Link to="/events/new" className="btn btn-primary btn-lg">
-          + Create Event
+          Create event
         </Link>
       </div>
 
-      {/* Control Bar: Tabs and Search */}
+      {/* Control Bar: Filters & Search */}
       <div className="list-controls-bar">
         <div className="filter-tabs" role="group" aria-label="Event category filters">
           <button
@@ -115,7 +114,7 @@ export const EventListPage: React.FC = () => {
             className={`filter-tab ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
           >
-            All Events <span className="tab-count">{events.length}</span>
+            All <span className="tab-count">{events.length}</span>
           </button>
           <button
             type="button"
@@ -136,10 +135,24 @@ export const EventListPage: React.FC = () => {
         </div>
 
         <div className="search-box">
-          <span className="search-icon" aria-hidden="true">🔍</span>
+          <span className="search-icon" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </span>
           <input
             type="search"
-            placeholder="Search events by title or keywords..."
+            placeholder="Search events by title or keyword..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search events"
@@ -178,11 +191,10 @@ export const EventListPage: React.FC = () => {
       {/* Empty State */}
       {!isLoading && !error && events.length === 0 && (
         <div className="state-card empty-state">
-          <div className="empty-icon" aria-hidden="true">📅</div>
           <h3>No events found</h3>
-          <p>Get started by creating your very first event.</p>
+          <p>Get started by creating your first event.</p>
           <Link to="/events/new" className="btn btn-primary">
-            Create Event
+            Create event
           </Link>
         </div>
       )}
@@ -190,9 +202,8 @@ export const EventListPage: React.FC = () => {
       {/* Filtered Empty State */}
       {!isLoading && !error && events.length > 0 && filteredEvents.length === 0 && (
         <div className="state-card empty-state">
-          <div className="empty-icon" aria-hidden="true">🔍</div>
           <h3>No matching events</h3>
-          <p>No events matched your search query or selected tab filter.</p>
+          <p>No events matched your search query or selected category filter.</p>
           <button
             onClick={() => {
               setActiveTab('all')
@@ -200,7 +211,7 @@ export const EventListPage: React.FC = () => {
             }}
             className="btn btn-secondary"
           >
-            Clear Filters
+            Clear filters
           </button>
         </div>
       )}
@@ -218,7 +229,7 @@ export const EventListPage: React.FC = () => {
             return (
               <article key={event.id} className="event-card-v2">
                 <div className="event-card-top">
-                  {/* Calendar Date Tile (Luma Reference Pattern) */}
+                  {/* Calendar Date Tile */}
                   <div className="date-tile" aria-hidden="true">
                     <span className="date-tile-month">{tile.month}</span>
                     <span className="date-tile-day">{tile.day}</span>
@@ -228,11 +239,11 @@ export const EventListPage: React.FC = () => {
                     <div className="event-card-status-row">
                       {getStatusBadge(event.status)}
                     </div>
-                    <h3 className="event-card-title">
+                    <h2 className="event-card-title">
                       <Link to={`/events/${event.id}`}>{event.title}</Link>
-                    </h3>
+                    </h2>
                     <p className="event-card-time-row">
-                      🕒 {formatDisplayDate(event.date)}
+                      {formatDisplayDate(event.date)}
                     </p>
                   </div>
                 </div>
@@ -241,11 +252,23 @@ export const EventListPage: React.FC = () => {
                   <p className="event-card-description">{event.description}</p>
                 )}
 
-                {/* Capacity Progress Bar (Eventbrite Reference Pattern) */}
+                {/* Capacity Progress Bar & Label */}
                 <div className="capacity-section">
                   <div className="capacity-labels">
                     <span className="capacity-text">
-                      <strong>{event.registrationCount}</strong> of <strong>{event.maxCapacity}</strong> seats booked
+                      {event.status === 'past' ? (
+                        <>Registration closed ({event.registrationCount} attended)</>
+                      ) : event.status === 'full' ? (
+                        <>Full ({event.maxCapacity} of {event.maxCapacity} registered)</>
+                      ) : (
+                        <>
+                          <strong>{event.remainingCapacity}</strong>{' '}
+                          {event.remainingCapacity === 1 ? 'spot left' : 'spots left'}{' '}
+                          <span className="capacity-subcount">
+                            ({event.registrationCount} of {event.maxCapacity} registered)
+                          </span>
+                        </>
+                      )}
                     </span>
                     <span className="capacity-pct">{occupancyPct}%</span>
                   </div>
@@ -258,13 +281,7 @@ export const EventListPage: React.FC = () => {
                     aria-label="Event capacity booked"
                   >
                     <div
-                      className={`capacity-fill ${
-                        event.status === 'full'
-                          ? 'fill-full'
-                          : event.status === 'past'
-                            ? 'fill-past'
-                            : 'fill-upcoming'
-                      }`}
+                      className={`capacity-fill fill-${event.status}`}
                       style={{ width: `${occupancyPct}%` }}
                     ></div>
                   </div>
@@ -272,7 +289,7 @@ export const EventListPage: React.FC = () => {
 
                 <div className="event-card-actions">
                   <Link to={`/events/${event.id}`} className="btn btn-sm btn-outline">
-                    View & Register
+                    {event.status === 'past' ? 'View event' : 'View details'}
                   </Link>
                   <Link to={`/events/${event.id}/edit`} className="btn btn-sm btn-ghost">
                     Edit

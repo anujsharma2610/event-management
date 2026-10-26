@@ -78,7 +78,7 @@ describe('EventListPage Component', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('heading', { name: /Explore & Manage Events/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /^Events$/i })).toBeInTheDocument()
 
     // Assert event titles are rendered
     expect(screen.getByText('Cloud Architecture Summit')).toBeInTheDocument()

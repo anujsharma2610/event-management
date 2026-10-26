@@ -16,7 +16,17 @@ export const THEME_STORAGE_KEY = 'event-management:theme'
  */
 export function getStoredThemePreference(): ThemePreference {
   try {
-    if (typeof window === 'undefined' || !window.localStorage) {
+    if (typeof window === 'undefined') {
+      return 'system'
+    }
+    if (window.location && window.location.search) {
+      const params = new URLSearchParams(window.location.search)
+      const urlTheme = params.get('theme')
+      if (urlTheme === 'light' || urlTheme === 'dark' || urlTheme === 'system') {
+        return urlTheme
+      }
+    }
+    if (!window.localStorage) {
       return 'system'
     }
     const saved = window.localStorage.getItem(THEME_STORAGE_KEY)

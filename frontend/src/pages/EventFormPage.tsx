@@ -99,7 +99,7 @@ export const EventFormPage: React.FC = () => {
         <Link to={isEditing && id ? `/events/${id}` : '/'} className="btn-back">
           ← {isEditing ? 'Back to Details' : 'Back to Events'}
         </Link>
-        <h2>{isEditing ? 'Edit Event' : 'Create New Event'}</h2>
+        <h1 className="page-heading">{isEditing ? 'Edit Event' : 'Create New Event'}</h1>
         <p className="subtitle">
           {isEditing
             ? 'Update event details and capacity settings.'

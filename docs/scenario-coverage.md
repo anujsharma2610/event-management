@@ -10,7 +10,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 1. Event Lifecycle & Storage (EV01–EV08)
+## 1. Event Lifecycle & Storage (EV01-EV08)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -25,7 +25,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 2. Validation & Input Boundaries (VA01–VA12)
+## 2. Validation & Input Boundaries (VA01-VA12)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -44,7 +44,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 3. Date, Time & Timezone Handling (DT01–DT12)
+## 3. Date, Time & Timezone Handling (DT01-DT12)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -63,7 +63,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 4. Attendee Identity & Registration Rules (ID01–ID06, RG01–RG08)
+## 4. Attendee Identity & Registration Rules (ID01-ID06, RG01-RG08)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -84,7 +84,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 5. Capacity & Time Mutation (CP01–CP04, TM01–TM03)
+## 5. Capacity & Time Mutation (CP01-CP04, TM01-TM03)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -98,7 +98,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 6. Concurrency & Contention (CC01–CC08)
+## 6. Concurrency & Contention (CC01-CC08)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -113,7 +113,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 7. Error Handling & Protocol Compliance (ER01–ER08)
+## 7. Error Handling & Protocol Compliance (ER01-ER08)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -128,7 +128,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 8. Frontend Interactions & State Management (UI01–UI24)
+## 8. Frontend Interactions & State Management (UI01-UI24)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -159,7 +159,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 9. System, Operational & Accessibility Checks (SYS01–SYS08, A11Y01–A11Y08)
+## 9. System, Operational & Accessibility Checks (SYS01-SYS08, A11Y01-A11Y08)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -182,7 +182,7 @@ This matrix documents the verification coverage for all business invariants, inp
 
 ---
 
-## 10. Dark Mode & Appearance Coverage (TH01–TH15)
+## 10. Dark Mode & Appearance Coverage (TH01-TH15)
 
 | ID | Requirement / Invariant | Starting State | Action / Interleaving | Expected Result | Test File & Name | Layer | Status | Residual Limitation |
 |---|---|---|---|---|---|---|---|---|
@@ -201,3 +201,25 @@ This matrix documents the verification coverage for all business invariants, inp
 | **TH13** | Shared components in both palettes | Light and Dark modes | Measure foreground/background contrast | All normal copy achieves >= 4.5:1 contrast; large text >= 3.0:1 | `DESIGN.md` & `frontend/src/styles.css` | Design | Covered | WCAG AA contrast |
 | **TH14** | Listener lifecycle cleanup | Mounted shell | Unmount App component | Media query and storage event listeners removed cleanly | `frontend/src/App.test.tsx::Scenario 14` | Component | Covered | No memory leak |
 | **TH15** | Cross-tab synchronization | Two browser tabs | Tab B updates localStorage theme | Tab A updates active preference and resolved appearance | `frontend/src/App.test.tsx::Scenario 15` | Component | Covered | Storage event sync |
+
+
+---
+
+## 11. Product Scenario Audit: Free, Paid, and Capacity Coverage (PS01-PS12)
+
+For complete architectural justification and scope boundary analysis, see `docs/product-scenario-audit.md`.
+
+| ID | Scenario | Classification | Invariant & Implementation Status | Test File & Name |
+|---|---|---|---|---|
+| **PS01** | No pricing metadata | Required & Implemented | Neutral Register/capacity language; no invented Free/Paid badge. | `frontend/src/pages/EventListPage.test.tsx` |
+| **PS02** | Free event display | Optional Extension | Requires explicit free admission metadata before claiming it. | Excluded from current schema |
+| **PS03** | Paid event display | Optional Extension | Amount and currency are purely informational, not evidence of completed payment. | Excluded from current schema |
+| **PS04** | Paid registration/checkout/refunds/taxes | Excluded | Outside original assessment scope; no financial processing. | Out of scope |
+| **PS05** | Available finite capacity | Required & Implemented | Exact counts displayed; atomic increments upon registration. | `tests/test_service.py::test_register_success` |
+| **PS06** | One remaining place | Required & Implemented | Thread-safe barrier test verifies exactly one succeeds; concurrent attempts receive 409 `EVENT_FULL`. | `tests/test_concurrency.py::test_concurrent_registrations_respect_capacity_barrier` |
+| **PS07** | Full future event | Required & Implemented | New registrations blocked with 409 `EVENT_FULL`; existing attendees can unregister. | `tests/test_service.py::test_register_capacity_limit` |
+| **PS08** | Past event with empty seats | Required & Implemented | Registration closed with 409 `EVENT_STARTED`, regardless of remaining capacity. In UI, displays "Registration closed". | `tests/test_service.py::test_register_past_or_equal_time_rejection` |
+| **PS09** | Zero/negative/fractional/over-limit capacity | Required & Implemented | Strictly rejected with 422 `VALIDATION_ERROR` by Pydantic validation. | `tests/test_service.py::test_schema_validation_capacity` |
+| **PS10** | Unlimited capacity | Excluded by Contract | Assessment contract specifies capacity between 1 and 10,000. Null or 0 values are strictly rejected. | `tests/test_service.py::test_schema_validation_capacity` |
+| **PS11** | Reduced capacity below attendees | Required & Implemented | Rejected with 409 `CAPACITY_BELOW_REGISTRATIONS`; record state preserved; clear form feedback. | `tests/test_service.py::test_update_event_cannot_reduce_capacity_below_registrations` |
+| **PS12** | Free/paid combined with full/past | Optional Extension Rule | If pricing metadata is added in the future, date and capacity eligibility rules must continue to evaluate first. | Documented in `docs/product-scenario-audit.md` |
