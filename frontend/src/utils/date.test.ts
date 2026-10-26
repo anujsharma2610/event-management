@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { formatDisplayDate, isoUtcToLocalInput, localInputToIsoUtc } from './date'
+import {
+  formatDisplayDate,
+  getDateTileParts,
+  isoUtcToLocalInput,
+  localInputToIsoUtc,
+} from './date'
 
 describe('Date and Timezone Utilities', () => {
   it('converts local datetime input string to ISO UTC string', () => {
@@ -38,5 +43,16 @@ describe('Date and Timezone Utilities', () => {
     expect(isoUtcToLocalInput('invalid')).toBe('')
     expect(formatDisplayDate('')).toBe('')
     expect(formatDisplayDate('invalid')).toBe('Invalid date')
+  })
+
+  it('extracts calendar date tile parts (month and day)', () => {
+    const tile = getDateTileParts('2030-06-15T13:00:00Z')
+    expect(tile.month.length).toBe(3)
+    expect(Number(tile.day)).toBeGreaterThanOrEqual(1)
+    expect(Number(tile.day)).toBeLessThanOrEqual(31)
+
+    const emptyTile = getDateTileParts('')
+    expect(emptyTile.month).toBe('')
+    expect(emptyTile.day).toBe('')
   })
 })

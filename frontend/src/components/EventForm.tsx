@@ -82,11 +82,19 @@ export const EventForm: React.FC<EventFormProps> = ({
     setErrors((prev) => ({ ...prev, general: undefined }))
 
     try {
-      const utcIso = localInputToIsoUtc(localDate)
+      // F07: If the formatted local date string matches the initial formatted date,
+      // preserve the exact original raw UTC timestamp to prevent precision truncation.
+      const isDateUntouched =
+        initialValues?.date &&
+        isoUtcToLocalInput(initialValues.date) === localDate
+      const finalDate = isDateUntouched
+        ? initialValues.date
+        : localInputToIsoUtc(localDate)
+
       await onSubmit({
         title: title.trim(),
         description,
-        date: utcIso,
+        date: finalDate,
         maxCapacity: Number(maxCapacity),
       })
     } catch (err: unknown) {

@@ -5,6 +5,8 @@ import { Event, RegistrationItem } from '../api/types'
 interface AttendeeControlsProps {
   event: Event
   registrations: RegistrationItem[]
+  selectedUserId?: string
+  onSelectedUserIdChange?: (userId: string) => void
   onRegister: (userId: string) => Promise<void>
   onUnregister: (userId: string) => Promise<void>
 }
@@ -12,10 +14,21 @@ interface AttendeeControlsProps {
 export const AttendeeControls: React.FC<AttendeeControlsProps> = ({
   event,
   registrations,
+  selectedUserId,
+  onSelectedUserIdChange,
   onRegister,
   onUnregister,
 }) => {
-  const [demoUserId, setDemoUserId] = useState('attendee-001')
+  const [localUserId, setLocalUserId] = useState('attendee-001')
+  const demoUserId = selectedUserId !== undefined ? selectedUserId : localUserId
+  const setDemoUserId = (val: string) => {
+    if (onSelectedUserIdChange) {
+      onSelectedUserIdChange(val)
+    } else {
+      setLocalUserId(val)
+    }
+  }
+
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)

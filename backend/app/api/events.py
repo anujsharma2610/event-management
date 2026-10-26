@@ -86,6 +86,7 @@ def get_event(
     summary="Update an existing event",
     description="Replace all writable fields of an existing event.",
     responses={
+        400: {"model": ErrorEnvelope, "description": "Malformed JSON payload"},
         404: {"model": ErrorEnvelope, "description": "Event not found"},
         409: {"model": ErrorEnvelope, "description": "Capacity below registered attendee count"},
         422: {"model": ErrorEnvelope, "description": "Validation failure"},
@@ -143,6 +144,7 @@ def list_registrations(
     summary="Register attendee for an event",
     description="Register a user by userId. Enforces event date, duplicate, and capacity rules.",
     responses={
+        400: {"model": ErrorEnvelope, "description": "Malformed JSON payload"},
         404: {"model": ErrorEnvelope, "description": "Event not found"},
         409: {"model": ErrorEnvelope, "description": "Event started, duplicate, or capacity full"},
         422: {"model": ErrorEnvelope, "description": "Validation failure"},

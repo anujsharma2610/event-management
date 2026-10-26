@@ -78,4 +78,71 @@ describe('EventForm Component', () => {
     resolveSubmit()
     await waitFor(() => expect(submitBtn).not.toBeDisabled())
   })
+
+  it('F07: preserves exact seconds and fractional precision when date is untouched', async () => {
+    const user = userEvent.setup()
+    const handleSubmit = vi.fn().mockResolvedValue(undefined)
+    const exactDateWithFractions = '2030-06-15T13:00:45.123Z'
+
+    render(
+      <EventForm
+        initialValues={{
+          title: 'Original Title',
+          description: 'Original Description',
+          date: exactDateWithFractions,
+          maxCapacity: 25,
+        }}
+        isEditing={true}
+        onSubmit={handleSubmit}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    // Edit only the title, leaving date field untouched
+    const titleInput = screen.getByLabelText(/Title/i)
+    await user.clear(titleInput)
+    await user.type(titleInput, 'Updated Title Only')
+
+    await user.click(screen.getByRole('button', { name: /Save Changes/i }))
+
+    await waitFor(() => expect(handleSubmit).toHaveBeenCalledTimes(1))
+
+    const submitted = handleSubmit.mock.calls[0][0]
+    expect(submitted.title).toBe('Updated Title Only')
+    // Must preserve the exact raw original timestamp with .123Z fractions intact
+    expect(submitted.date).toBe(exactDateWithFractions)
+  })
+
+  it('F07: updates timestamp when date is explicitly modified by user', async () => {
+    const user = userEvent.setup()
+    const handleSubmit = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <EventForm
+        initialValues={{
+          title: 'Original Title',
+          description: '',
+          date: '2030-06-15T13:00:45.123Z',
+          maxCapacity: 25,
+        }}
+        isEditing={true}
+        onSubmit={handleSubmit}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    // Explicitly modify the date input
+    const dateInput = screen.getByLabelText(/Event Date & Time/i)
+    await user.clear(dateInput)
+    await user.type(dateInput, '2030-07-20T15:00')
+
+    await user.click(screen.getByRole('button', { name: /Save Changes/i }))
+
+    await waitFor(() => expect(handleSubmit).toHaveBeenCalledTimes(1))
+
+    const submitted = handleSubmit.mock.calls[0][0]
+    expect(submitted.date).not.toBe('2030-06-15T13:00:45.123Z')
+    expect(typeof submitted.date).toBe('string')
+    expect(submitted.date.endsWith('Z')).toBe(true)
+  })
 })

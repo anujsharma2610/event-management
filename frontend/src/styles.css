@@ -269,12 +269,12 @@ body {
 }
 
 .btn-warning {
-  background-color: var(--color-warning);
+  background-color: #b45309;
   color: #ffffff;
 }
 
 .btn-warning:hover:not(:disabled) {
-  background-color: var(--color-warning-hover);
+  background-color: #92400e;
 }
 
 .btn-back {

@@ -45,7 +45,7 @@ export const EventListPage: React.FC = () => {
 
       // Search query filter
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase()
+        const q = searchQuery.trim().toLowerCase()
         const matchesTitle = event.title.toLowerCase().includes(q)
         const matchesDesc = event.description.toLowerCase().includes(q)
         if (!matchesTitle && !matchesDesc) return false
@@ -77,7 +77,7 @@ export const EventListPage: React.FC = () => {
         return (
           <span className="badge badge-full">
             <span className="badge-dot" aria-hidden="true"></span>
-            Sold Out
+            Full
           </span>
         )
       case 'past':
@@ -98,7 +98,7 @@ export const EventListPage: React.FC = () => {
           <span className="hero-kicker">Event Directory</span>
           <h2>Explore & Manage Events</h2>
           <p className="subtitle">
-            Schedule gatherings, track seat reservations, and manage attendee rosters in real time.
+            Schedule gatherings, track seat reservations, and manage attendee rosters.
           </p>
         </div>
         <Link to="/events/new" className="btn btn-primary btn-lg">
@@ -108,26 +108,26 @@ export const EventListPage: React.FC = () => {
 
       {/* Control Bar: Tabs and Search */}
       <div className="list-controls-bar">
-        <div className="filter-tabs" role="tablist" aria-label="Event category filters">
+        <div className="filter-tabs" role="group" aria-label="Event category filters">
           <button
-            role="tab"
-            aria-selected={activeTab === 'all'}
+            type="button"
+            aria-pressed={activeTab === 'all'}
             className={`filter-tab ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
           >
             All Events <span className="tab-count">{events.length}</span>
           </button>
           <button
-            role="tab"
-            aria-selected={activeTab === 'upcoming'}
+            type="button"
+            aria-pressed={activeTab === 'upcoming'}
             className={`filter-tab ${activeTab === 'upcoming' ? 'active' : ''}`}
             onClick={() => setActiveTab('upcoming')}
           >
             Upcoming <span className="tab-count">{upcomingCount}</span>
           </button>
           <button
-            role="tab"
-            aria-selected={activeTab === 'past'}
+            type="button"
+            aria-pressed={activeTab === 'past'}
             className={`filter-tab ${activeTab === 'past' ? 'active' : ''}`}
             onClick={() => setActiveTab('past')}
           >

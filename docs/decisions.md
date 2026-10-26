@@ -57,3 +57,15 @@ This document records the architectural and design decisions for the Event Manag
 - `404 Not Found`: Event does not exist.
 - `409 Conflict`: Business rule conflict (`EVENT_STARTED`, `ALREADY_REGISTERED`, `EVENT_FULL`, `CAPACITY_BELOW_REGISTRATIONS`).
 - `422 Unprocessable Entity`: Validation failure on request body or parameters.
+
+## 8. Hardening and Review Decisions
+
+Following the deep review pass, the following implementation decisions were established:
+
+1. **Protocol Header Preservation**: Starlette's `StarletteHTTPException` handler was updated to explicitly preserve `exc.headers` when returning error envelopes (for example, keeping `Allow: GET, POST, OPTIONS` on 405 Method Not Allowed responses).
+2. **CORS on Unexpected 500 Errors**: In FastAPI/Starlette, `ServerErrorMiddleware` executes outside `CORSMiddleware`. The global unhandled exception handler explicitly checks the request `Origin` header against `ALLOWED_ORIGINS` and sets `Access-Control-Allow-Origin` and `Vary: Origin`, ensuring cross-origin browser clients receive structured error JSON rather than opaque network failures.
+3. **Date Normalization Overflow**: Datetimes with extreme offsets (e.g. `0001-01-01T00:00:00+01:00` or `9999-12-31T23:59:59-01:00`) that overflow Python's representable range during UTC conversion are caught as `OverflowError` and mapped to `422 VALIDATION_ERROR` rather than escaping to an unhandled 500.
+4. **Timestamp Precision Preservation on Edit**: Form inputs for `datetime-local` have minute granularity. When an operator updates only the title or capacity of an event that has second or fractional timestamps (e.g. `2030-06-15T13:00:45.123Z`), the frontend form checks if the date input is untouched and preserves the exact original raw UTC timestamp, preventing accidental shift of event registration cutoffs.
+5. **Background Revalidation State Separation**: `EventDetailPage` separates initial loading (`isLoading = true` when no data is loaded) from background data revalidation (`isRefreshing = true`). Revalidations after mutations do not unmount attendee controls, preserving user input, typed demo identity, and visible mutation conflict banners.
+6. **Accessible Modal Dialog**: The delete confirmation modal implements standard WAI-ARIA dialog practices: autofocus on Cancel, focus containment (Tab/Shift+Tab wrapping), dismissal via Escape key, and focus restoration to the trigger button upon close.
+7. **Test Fixture Seed Isolation**: `create_app(seed_demo=False)` explicitly controls demo seeding, guaranteeing that setting `SEED_DEMO_DATA=true` in developer shell environments does not contaminate test fixtures or break test isolation.

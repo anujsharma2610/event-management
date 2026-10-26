@@ -207,3 +207,167 @@ def test_cors_preflight(client: TestClient) -> None:
     )
     assert response.status_code == 200
     assert response.headers.get("access-control-allow-origin") == "http://127.0.0.1:5173"
+
+
+def test_create_event_extreme_offset_date_returns_422(client: TestClient) -> None:
+    """F03: Extreme offset dates overflowing Python year range return 422 VALIDATION_ERROR."""
+    for extreme_date in ["0001-01-01T00:00:00+01:00", "9999-12-31T23:59:59-01:00"]:
+        res = client.post(
+            "/api/events",
+            json={
+                "title": "Extreme Date Event",
+                "description": "",
+                "date": extreme_date,
+                "maxCapacity": 10,
+            },
+        )
+        assert res.status_code == 422
+        data = res.json()
+        assert data["error"]["code"] == "VALIDATION_ERROR"
+        assert any(d["field"] == "date" for d in data["error"]["details"])
+
+
+def test_put_event_extreme_offset_date_returns_422(client: TestClient, future_iso: str) -> None:
+    """F03: PUT with extreme date returns 422 and preserves existing record untouched."""
+    create_res = client.post(
+        "/api/events",
+        json={"title": "Orig", "description": "D", "date": future_iso, "maxCapacity": 10},
+    )
+    eid = create_res.json()["id"]
+
+    res = client.put(
+        f"/api/events/{eid}",
+        json={
+            "title": "Updated",
+            "description": "D",
+            "date": "0001-01-01T00:00:00+01:00",
+            "maxCapacity": 10,
+        },
+    )
+    assert res.status_code == 422
+    assert res.json()["error"]["code"] == "VALIDATION_ERROR"
+
+    # Verify store is unmodified
+    check = client.get(f"/api/events/{eid}")
+    assert check.status_code == 200
+    assert check.json()["title"] == "Orig"
+
+
+def test_unsupported_method_preserves_allow_header(client: TestClient) -> None:
+    """F05: Unsupported HTTP method returns 405 with standard Allow header preserved."""
+    res = client.patch("/api/events")
+    assert res.status_code == 405
+    data = res.json()
+    assert data["error"]["code"] == "HTTP_405"
+    assert "Allow" in res.headers
+    allowed = res.headers["Allow"]
+    assert "GET" in allowed
+
+
+def test_openapi_documents_malformed_json_on_all_body_routes(client: TestClient) -> None:
+    """F06: Generated OpenAPI documents 400 on all body-accepting routes and user ID constraints."""
+    spec = client.get("/openapi.json").json()
+    paths = spec["paths"]
+
+    # Check 400 on POST /api/events
+    assert "400" in paths["/api/events"]["post"]["responses"]
+
+    # Check 400 on PUT /api/events/{event_id}
+    assert "400" in paths["/api/events/{event_id}"]["put"]["responses"]
+
+    # Check 400 on POST /api/events/{event_id}/registrations
+    assert "400" in paths["/api/events/{event_id}/registrations"]["post"]["responses"]
+
+    # Check RegisterRequest schema has pattern and bounds
+    reg_schema = spec["components"]["schemas"]["RegisterRequest"]
+    assert "userId" in reg_schema["properties"]
+    prop = reg_schema["properties"]["userId"]
+    assert prop.get("minLength") == 1
+    assert prop.get("maxLength") == 64
+    assert prop.get("pattern") == "^[A-Za-z0-9_-]+$"
+
+
+def test_unexpected_500_error_retains_cors_headers_for_allowed_origin(
+    app: TestClient, client: TestClient
+) -> None:
+    """F12: Forced 500 error retains CORS headers for allowed origins and omits for disallowed."""
+    from fastapi import Request
+
+    # Create isolated client with test endpoint raising runtime exception
+    from app.main import create_app
+
+    test_app = create_app(seed_demo=False)
+
+    @test_app.get("/api/test-forced-crash")
+    def crash_endpoint(request: Request) -> None:
+        raise RuntimeError("Simulated crash")
+
+    crash_client = TestClient(test_app, raise_server_exceptions=False)
+
+    # Allowed origin
+    res_allowed = crash_client.get(
+        "/api/test-forced-crash", headers={"Origin": "http://127.0.0.1:5173"}
+    )
+    assert res_allowed.status_code == 500
+    assert res_allowed.json()["error"]["code"] == "INTERNAL_ERROR"
+    assert res_allowed.headers.get("access-control-allow-origin") == "http://127.0.0.1:5173"
+
+    # Disallowed origin
+    res_disallowed = crash_client.get(
+        "/api/test-forced-crash", headers={"Origin": "https://unauthorized.domain"}
+    )
+    assert res_disallowed.status_code == 500
+    assert "access-control-allow-origin" not in res_disallowed.headers
+
+
+def test_create_event_unicode_title(client: TestClient, future_iso: str) -> None:
+    """VA03: Unicode characters and emojis in event title are supported."""
+    res = client.post(
+        "/api/events",
+        json={
+            "title": "Tech Summit 🚀 世界",
+            "description": "Unicode test",
+            "date": future_iso,
+            "maxCapacity": 50,
+        },
+    )
+    assert res.status_code == 201
+    assert res.json()["title"] == "Tech Summit 🚀 世界"
+
+
+def test_create_event_missing_fields(client: TestClient) -> None:
+    """VA07: Missing required fields return 422 with field-level details."""
+    res = client.post("/api/events", json={})
+    assert res.status_code == 422
+    data = res.json()
+    assert data["error"]["code"] == "VALIDATION_ERROR"
+    fields = [d["field"] for d in data["error"]["details"]]
+    assert "title" in fields
+    assert "date" in fields
+    assert "maxCapacity" in fields
+
+
+def test_non_object_json_body_returns_422(client: TestClient) -> None:
+    """ER04: Top-level non-object JSON bodies return 422 validation failure."""
+    res = client.post(
+        "/api/events",
+        content="[1, 2, 3]",
+        headers={"Content-Type": "application/json"},
+    )
+    assert res.status_code == 422
+    assert res.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_malformed_uuid_returns_422(client: TestClient) -> None:
+    """ER02: Malformed UUID path parameter returns 422 validation error."""
+    res = client.get("/api/events/not-a-valid-uuid")
+    assert res.status_code == 422
+    assert res.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_unknown_route_returns_404_envelope(client: TestClient) -> None:
+    """ER05: Unknown route returns standard 404 NOT_FOUND envelope."""
+    res = client.get("/api/non-existent-route")
+    assert res.status_code == 404
+    data = res.json()
+    assert data["error"]["code"] == "NOT_FOUND"

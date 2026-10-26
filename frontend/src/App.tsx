@@ -35,6 +35,24 @@ export const App: React.FC = () => {
             <Route path="/events/new" element={<EventFormPage />} />
             <Route path="/events/:id" element={<EventDetailPage />} />
             <Route path="/events/:id/edit" element={<EventFormPage />} />
+            <Route
+              path="*"
+              element={
+                <div className="page-container">
+                  <div className="state-card error-state" role="alert">
+                    <h3>Page Not Found</h3>
+                    <p className="error-message">
+                      The requested URL does not match any known event routes.
+                    </p>
+                    <div className="form-actions">
+                      <Link to="/" className="btn btn-primary">
+                        Return to Events
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              }
+            />
           </Routes>
         </main>
 

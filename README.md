@@ -54,6 +54,8 @@ event-management/
 ├── docs/
 │   ├── decisions.md                    # Architecture and implementation decisions
 │   ├── demo.md                         # Detailed step-by-step demonstration walkthrough
+│   ├── review-findings.md              # Hardening log and root-cause disposition for F01-F12
+│   ├── scenario-coverage.md            # Evidence-backed scenario coverage matrix
 │   ├── ui-design.md                    # Mobbin design research, patterns, and decisions
 │   └── screenshots/
 │       ├── events.png                  # Screenshot of event directory (Desktop)
@@ -305,8 +307,11 @@ curl -i -X DELETE http://127.0.0.1:8000/api/events/{eventId}
 ### Backend Verification
 From `backend/` with virtual environment activated:
 ```bash
-# Run unit, API contracts, and barrier concurrency tests (34 tests)
+# Run unit, API contracts, edge validations, and barrier concurrency tests (68 tests)
 pytest -v
+
+# Run with demo seeding explicitly active to verify fixture isolation
+SEED_DEMO_DATA=true pytest -q
 
 # Run Ruff linter check
 ruff check .
@@ -318,7 +323,7 @@ ruff format --check .
 ### Frontend Verification
 From `frontend/`:
 ```bash
-# Run Vitest component & date utility tests (11 tests)
+# Run Vitest component, routing, and date utility tests (26 tests across 5 test suites)
 npm run test
 
 # Run TypeScript typecheck

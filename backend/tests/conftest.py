@@ -32,7 +32,7 @@ def store() -> EventStore:
 @pytest.fixture
 def app(store: EventStore, fake_clock: Callable[[], datetime]) -> FastAPI:
     """Provide a test application instance with injected store and clock."""
-    return create_app(store=store, clock=fake_clock)
+    return create_app(store=store, clock=fake_clock, seed_demo=False)
 
 
 @pytest.fixture

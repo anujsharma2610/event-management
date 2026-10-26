@@ -14,7 +14,12 @@ export const EventFormPage: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!id) return
+    if (!id) {
+      setInitialValues(undefined)
+      setIsLoading(false)
+      setLoadError(null)
+      return
+    }
 
     const controller = new AbortController()
     setIsLoading(true)
@@ -104,7 +109,8 @@ export const EventFormPage: React.FC = () => {
 
       <div className="form-card-v2">
         <EventForm
-          initialValues={initialValues}
+          key={id ?? 'create'}
+          initialValues={isEditing ? initialValues : undefined}
           isEditing={isEditing}
           onSubmit={handleSubmit}
           onCancel={handleCancel}

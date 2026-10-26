@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { apiClient, ApiError } from '../api/client'
 import { Event, RegistrationItem } from '../api/types'
@@ -13,16 +13,34 @@ export const EventDetailPage: React.FC = () => {
   const [event, setEvent] = useState<Event | null>(null)
   const [registrations, setRegistrations] = useState<RegistrationItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [refreshError, setRefreshError] = useState<string | null>(null)
+  const [rosterActionError, setRosterActionError] = useState<string | null>(null)
+  const [unregisteringUserId, setUnregisteringUserId] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState('attendee-001')
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [rosterSearch, setRosterSearch] = useState('')
 
+  const eventRef = useRef<Event | null>(null)
+  eventRef.current = event
+
+  const deleteTriggerRef = useRef<HTMLButtonElement>(null)
+  const cancelBtnRef = useRef<HTMLButtonElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+
   const loadData = useCallback(
-    async (signal?: AbortSignal) => {
+    async (signal?: AbortSignal, isBackground = false) => {
       if (!id) return
-      setIsLoading(true)
-      setError(null)
+      const isInitial = eventRef.current === null && !isBackground
+      if (isInitial) {
+        setIsLoading(true)
+        setError(null)
+      } else {
+        setIsRefreshing(true)
+      }
 
       try {
         const [eventData, regData] = await Promise.all([
@@ -31,15 +49,21 @@ export const EventDetailPage: React.FC = () => {
         ])
         setEvent(eventData)
         setRegistrations(regData.items)
+        setRefreshError(null)
       } catch (err: unknown) {
         if (err instanceof DOMException && err.name === 'AbortError') return
-        if (err instanceof ApiError) {
-          setError(err.message)
+        if (isInitial) {
+          if (err instanceof ApiError) {
+            setError(err.message)
+          } else {
+            setError('Failed to load event details.')
+          }
         } else {
-          setError('Failed to load event details.')
+          setRefreshError('Action completed, but failed to refresh latest event data.')
         }
       } finally {
         setIsLoading(false)
+        setIsRefreshing(false)
       }
     },
     [id],
@@ -51,9 +75,45 @@ export const EventDetailPage: React.FC = () => {
     return () => controller.abort()
   }, [loadData])
 
+  // F08: Accessible modal keyboard interaction (Escape listener & Tab focus trap)
+  useEffect(() => {
+    if (!showDeleteConfirm) return
+
+    cancelBtnRef.current?.focus()
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setShowDeleteConfirm(false)
+        deleteTriggerRef.current?.focus()
+        return
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLButtonElement>(
+          'button:not([disabled])',
+        )
+        if (focusables.length === 0) return
+        const first = focusables[0]
+        const last = focusables[focusables.length - 1]
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showDeleteConfirm])
+
   const filteredRegistrations = useMemo(() => {
     if (!rosterSearch.trim()) return registrations
-    const q = rosterSearch.toLowerCase()
+    const q = rosterSearch.trim().toLowerCase()
     return registrations.filter((r) => r.userId.toLowerCase().includes(q))
   }, [registrations, rosterSearch])
 
@@ -62,7 +122,7 @@ export const EventDetailPage: React.FC = () => {
     try {
       await apiClient.registerAttendee(id, userId)
     } finally {
-      await loadData()
+      await loadData(undefined, true)
     }
   }
 
@@ -71,7 +131,26 @@ export const EventDetailPage: React.FC = () => {
     try {
       await apiClient.unregisterAttendee(id, userId)
     } finally {
-      await loadData()
+      await loadData(undefined, true)
+    }
+  }
+
+  const handleRosterUnregister = async (targetUserId: string) => {
+    if (!id || unregisteringUserId) return
+    setUnregisteringUserId(targetUserId)
+    setRosterActionError(null)
+
+    try {
+      await apiClient.unregisterAttendee(id, targetUserId)
+      await loadData(undefined, true)
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setRosterActionError(err.message)
+      } else {
+        setRosterActionError('Failed to unregister attendee.')
+      }
+    } finally {
+      setUnregisteringUserId(null)
     }
   }
 
@@ -89,7 +168,13 @@ export const EventDetailPage: React.FC = () => {
       }
       setIsDeleting(false)
       setShowDeleteConfirm(false)
+      deleteTriggerRef.current?.focus()
     }
+  }
+
+  const closeDeleteConfirm = () => {
+    setShowDeleteConfirm(false)
+    deleteTriggerRef.current?.focus()
   }
 
   if (isLoading) {
@@ -133,15 +218,34 @@ export const EventDetailPage: React.FC = () => {
         </Link>
 
         <div className="top-bar-right">
+          {isRefreshing && (
+            <span className="refreshing-indicator" aria-live="polite">
+              Updating...
+            </span>
+          )}
           <button
-            onClick={() => loadData()}
+            onClick={() => loadData(undefined, true)}
             className="btn btn-sm btn-ghost"
             title="Refresh event data from server"
+            disabled={isRefreshing}
           >
             🔄 Refresh
           </button>
         </div>
       </div>
+
+      {refreshError && (
+        <div className="alert alert-warning" role="alert" style={{ marginBottom: '1rem' }}>
+          <span>⚠️ {refreshError}</span>
+          <button
+            onClick={() => setRefreshError(null)}
+            className="btn-close"
+            aria-label="Dismiss warning"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Two-Column Responsive Layout (Luma Reference Pattern) */}
       <div className="event-detail-layout">
@@ -198,45 +302,58 @@ export const EventDetailPage: React.FC = () => {
           {/* Description Section */}
           {event.description && (
             <section className="detail-content-card">
-              <h2 className="section-title">About this Event</h2>
-              <div className="event-description-text">{event.description}</div>
+              <h3 className="section-title">About this event</h3>
+              <p className="event-description-text">{event.description}</p>
             </section>
           )}
 
-          {/* Attendees Roster Section (Partiful / Eventbrite Pattern) */}
-          <section className="detail-content-card">
+          {/* Attendee Roster Section */}
+          <section className="detail-content-card roster-section">
             <div className="roster-header-row">
               <div>
-                <h2 className="section-title">Registered Attendees</h2>
-                <p className="section-subtitle">
-                  {registrations.length} confirmed participant
-                  {registrations.length === 1 ? '' : 's'}
-                </p>
+                <h3 className="section-title">Registered Attendees</h3>
+                <span className="roster-count-sub">
+                  {registrations.length} participant{registrations.length === 1 ? '' : 's'} registered
+                </span>
               </div>
 
               {registrations.length > 0 && (
-                <div className="roster-search-input">
+                <div className="roster-search-wrap">
                   <input
                     type="search"
-                    placeholder="Search attendee by ID..."
+                    placeholder="Filter roster..."
                     value={rosterSearch}
                     onChange={(e) => setRosterSearch(e.target.value)}
-                    aria-label="Filter registered attendees"
+                    className="roster-search-input"
+                    aria-label="Filter attendee roster by name"
                   />
                 </div>
               )}
             </div>
 
+            {rosterActionError && (
+              <div className="alert alert-error" role="alert" style={{ marginBottom: '1rem' }}>
+                <span>⚠️ {rosterActionError}</span>
+                <button
+                  onClick={() => setRosterActionError(null)}
+                  className="btn-close"
+                  aria-label="Dismiss error"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
             {registrations.length === 0 ? (
-              <div className="empty-roster-box">
-                <div className="empty-roster-icon" aria-hidden="true">👥</div>
-                <p className="empty-roster-title">No attendees yet</p>
-                <p className="empty-roster-desc">
-                  Be the first to register for this event using the registration card.
+              <div className="empty-roster-state">
+                <span className="empty-icon" aria-hidden="true">👥</span>
+                <p className="empty-text">No attendees registered yet.</p>
+                <p className="empty-subtext">
+                  Be the first to join using the registration card on the right!
                 </p>
               </div>
             ) : filteredRegistrations.length === 0 ? (
-              <div className="empty-roster-box">
+              <div className="empty-roster-state">
                 <p>No attendees matched "{rosterSearch}".</p>
               </div>
             ) : (
@@ -244,6 +361,7 @@ export const EventDetailPage: React.FC = () => {
                 {filteredRegistrations.map((attendee) => {
                   const initials = getInitials(attendee.userId)
                   const avatarBg = getAvatarColor(attendee.userId)
+                  const isRemovingThis = unregisteringUserId === attendee.userId
 
                   return (
                     <div key={attendee.userId} className="roster-item-card">
@@ -266,11 +384,12 @@ export const EventDetailPage: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => handleUnregister(attendee.userId)}
+                        onClick={() => handleRosterUnregister(attendee.userId)}
                         className="btn btn-sm btn-ghost-danger"
+                        disabled={isRemovingThis}
                         title={`Unregister attendee ${attendee.userId}`}
                       >
-                        Unregister
+                        {isRemovingThis ? 'Removing...' : 'Unregister'}
                       </button>
                     </div>
                   )
@@ -286,6 +405,8 @@ export const EventDetailPage: React.FC = () => {
           <AttendeeControls
             event={event}
             registrations={registrations}
+            selectedUserId={selectedUserId}
+            onSelectedUserIdChange={setSelectedUserId}
             onRegister={handleRegister}
             onUnregister={handleUnregister}
           />
@@ -300,6 +421,7 @@ export const EventDetailPage: React.FC = () => {
                 ✏️ Edit Event Details
               </Link>
               <button
+                ref={deleteTriggerRef}
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 className="btn btn-danger-outline btn-block"
@@ -315,14 +437,16 @@ export const EventDetailPage: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div
+          ref={modalRef}
           className="modal-backdrop"
           role="dialog"
           aria-modal="true"
           aria-labelledby="modal-title"
+          aria-describedby="modal-desc"
         >
           <div className="modal-card">
             <h3 id="modal-title">Delete Event</h3>
-            <p>
+            <p id="modal-desc">
               Are you sure you want to permanently delete <strong>{event.title}</strong>?
             </p>
             <div className="modal-warning">
@@ -331,8 +455,9 @@ export const EventDetailPage: React.FC = () => {
             </div>
             <div className="modal-actions">
               <button
+                ref={cancelBtnRef}
                 type="button"
-                onClick={() => setShowDeleteConfirm(false)}
+                onClick={closeDeleteConfirm}
                 className="btn btn-secondary"
                 disabled={isDeleting}
               >

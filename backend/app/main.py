@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 def create_app(
     store: EventStore | None = None,
     clock: Callable[[], datetime] | None = None,
+    seed_demo: bool | None = None,
 ) -> FastAPI:
     """Create and configure a FastAPI application instance."""
     app_store = store if store is not None else EventStore()
@@ -128,6 +129,7 @@ def create_app(
         code = "NOT_FOUND" if exc.status_code == 404 else f"HTTP_{exc.status_code}"
         return JSONResponse(
             status_code=exc.status_code,
+            headers=dict(exc.headers) if exc.headers else None,
             content={
                 "error": {
                     "code": code,
@@ -141,8 +143,15 @@ def create_app(
     @app.exception_handler(Exception)
     async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled server exception: %s", exc)
+        headers: dict[str, str] = {}
+        origin = request.headers.get("origin")
+        if origin and ("*" in allowed_origins or origin in allowed_origins):
+            headers["Access-Control-Allow-Origin"] = origin
+            headers["Vary"] = "Origin"
+
         return JSONResponse(
             status_code=500,
+            headers=headers if headers else None,
             content={
                 "error": {
                     "code": "INTERNAL_ERROR",
@@ -160,8 +169,13 @@ def create_app(
         """Health check endpoint."""
         return JSONResponse(status_code=200, content={"status": "ok"})
 
-    # Optional demo seed on startup if requested via environment
-    if os.getenv("SEED_DEMO_DATA", "").lower() in ("1", "true", "yes"):
+    # Optional demo seed on startup if requested via parameter or environment
+    should_seed = (
+        seed_demo
+        if seed_demo is not None
+        else (os.getenv("SEED_DEMO_DATA", "").lower() in ("1", "true", "yes"))
+    )
+    if should_seed:
         seed_service = EventService(store=app_store, clock=app_clock)
         seed_demo_data(seed_service)
 

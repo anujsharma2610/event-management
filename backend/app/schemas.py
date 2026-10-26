@@ -74,7 +74,17 @@ class EventWrite(BaseModel):
         if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
             raise ValueError("Date must include a timezone offset (e.g. 'Z' or '+00:00').")
 
-        return dt.astimezone(UTC)
+        try:
+            utc_dt = dt.astimezone(UTC)
+        except OverflowError as e:
+            raise ValueError(
+                "Date value out of range: UTC conversion exceeds representable year range (year 1 to 9999)."
+            ) from e
+
+        if not (1 <= utc_dt.year <= 9999):
+            raise ValueError("Normalized UTC date must have year between 1 and 9999.")
+
+        return utc_dt
 
 
 class EventCreate(EventWrite):
@@ -129,7 +139,14 @@ class RegisterRequest(BaseModel):
         populate_by_name=True,
     )
 
-    user_id: str = Field(..., alias="userId")
+    user_id: str = Field(
+        ...,
+        alias="userId",
+        min_length=1,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9_-]+$",
+        description="Attendee identifier (1-64 alphanumeric characters, underscores, or hyphens).",
+    )
 
     @field_validator("user_id", mode="before")
     @classmethod

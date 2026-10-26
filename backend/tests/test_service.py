@@ -474,3 +474,334 @@ def test_unregister_missing_event_raises_not_found(service: EventService) -> Non
     """Verify unregistering from a missing event raises EventNotFoundError."""
     with pytest.raises(EventNotFoundError):
         service.unregister(uuid4(), "user1")
+
+
+def test_schema_validation_description() -> None:
+    """VA05: Description length boundaries 0, 2000, 2001."""
+    # 0 length
+    e0 = EventCreate(title="T", description="", date="2030-06-15T12:00:00Z", maxCapacity=10)
+    assert e0.description == ""
+
+    # 2000 length
+    e2k = EventCreate(
+        title="T", description="x" * 2000, date="2030-06-15T12:00:00Z", maxCapacity=10
+    )
+    assert len(e2k.description) == 2000
+
+    # 2001 length fails
+    with pytest.raises(ValidationError):
+        EventCreate(title="T", description="x" * 2001, date="2030-06-15T12:00:00Z", maxCapacity=10)
+
+
+def test_register_whitespace_trimmed(service: EventService, fixed_now: datetime) -> None:
+    """ID01: User ID is whitespace-trimmed upon registration."""
+    e = service.create_event(
+        EventCreate(
+            title="Trim ID",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=10,
+        )
+    )
+    res = service.register(e.id, RegisterRequest(userId="   attendee-trimmed   "))
+    assert res.user_id == "attendee-trimmed"
+    regs = service.list_registrations(e.id)
+    assert regs.items[0].user_id == "attendee-trimmed"
+
+
+def test_register_case_sensitive_identity(service: EventService, fixed_now: datetime) -> None:
+    """ID02: User ID identities are case-sensitive."""
+    e = service.create_event(
+        EventCreate(
+            title="Case Event",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=10,
+        )
+    )
+    service.register(e.id, RegisterRequest(userId="UserAlpha"))
+    service.register(e.id, RegisterRequest(userId="useralpha"))
+    assert service.get_event(e.id).registration_count == 2
+
+
+def test_register_user_id_length_boundaries(service: EventService, fixed_now: datetime) -> None:
+    """ID04: User ID boundary validation (1 and 64 allowed, 0 and 65 rejected)."""
+    e = service.create_event(
+        EventCreate(
+            title="Boundary Event",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=10,
+        )
+    )
+    # 1 char allowed
+    service.register(e.id, RegisterRequest(userId="A"))
+    # 64 chars allowed
+    id64 = "x" * 64
+    service.register(e.id, RegisterRequest(userId=id64))
+
+    # 65 chars rejected
+    with pytest.raises(ValidationError):
+        RegisterRequest(userId="x" * 65)
+
+    # Empty rejected
+    with pytest.raises(ValidationError):
+        RegisterRequest(userId="")
+
+
+def test_same_user_across_multiple_events(service: EventService, fixed_now: datetime) -> None:
+    """ID05: Same user ID can register on multiple distinct events."""
+    e1 = service.create_event(
+        EventCreate(
+            title="Event 1",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=10,
+        )
+    )
+    e2 = service.create_event(
+        EventCreate(
+            title="Event 2",
+            description="",
+            date=fixed_now + timedelta(days=2),
+            maxCapacity=10,
+        )
+    )
+    service.register(e1.id, RegisterRequest(userId="common-user"))
+    service.register(e2.id, RegisterRequest(userId="common-user"))
+
+    assert service.get_event(e1.id).registration_count == 1
+    assert service.get_event(e2.id).registration_count == 1
+
+
+def test_register_unregister_normalization_parity(
+    service: EventService, fixed_now: datetime
+) -> None:
+    """ID06: Registering with untrimmed and unregistering with trimmed works consistently."""
+    e = service.create_event(
+        EventCreate(
+            title="Norm Event",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=10,
+        )
+    )
+    service.register(e.id, RegisterRequest(userId="  user-to-remove  "))
+    assert service.get_event(e.id).registration_count == 1
+
+    service.unregister(e.id, "user-to-remove")
+    assert service.get_event(e.id).registration_count == 0
+
+
+def test_register_duplicate_precedence_over_full(
+    service: EventService, fixed_now: datetime
+) -> None:
+    """RG03: Duplicate registration returns ALREADY_REGISTERED even if event is full."""
+    from app.errors import AlreadyRegisteredError
+
+    e = service.create_event(
+        EventCreate(
+            title="Tiny Event",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=1,
+        )
+    )
+    service.register(e.id, RegisterRequest(userId="first-user"))
+    assert service.get_event(e.id).status == "full"
+
+    # Registering first-user again raises AlreadyRegisteredError (not EventFullError)
+    with pytest.raises(AlreadyRegisteredError):
+        service.register(e.id, RegisterRequest(userId="first-user"))
+
+
+def test_register_past_duplicate_precedence(service: EventService, fixed_now: datetime) -> None:
+    """RG04: Duplicate registration on past event returns EVENT_STARTED."""
+    e = service.create_event(
+        EventCreate(
+            title="Past Precedence",
+            description="",
+            date=fixed_now + timedelta(hours=1),
+            maxCapacity=10,
+        )
+    )
+    service.register(e.id, RegisterRequest(userId="u1"))
+
+    # Advance clock past event
+    service.clock = lambda: fixed_now + timedelta(hours=2)
+
+    # Attempt duplicate registration on past event -> EVENT_STARTED takes precedence
+    with pytest.raises(EventStartedError):
+        service.register(e.id, RegisterRequest(userId="u1"))
+
+
+def test_register_one_microsecond_before_start(service: EventService, fixed_now: datetime) -> None:
+    """DT07: Registration succeeds 1 microsecond before start time."""
+    event_time = fixed_now + timedelta(hours=1)
+    e = service.create_event(
+        EventCreate(
+            title="Blink Event",
+            description="",
+            date=event_time,
+            maxCapacity=10,
+        )
+    )
+    # Clock at exactly 1 microsecond before
+    service.clock = lambda: event_time - timedelta(microseconds=1)
+    res = service.register(e.id, RegisterRequest(userId="just-in-time"))
+    assert res.user_id == "just-in-time"
+
+
+def test_update_event_capacity_equals_attendees(service: EventService, fixed_now: datetime) -> None:
+    """CP01: Capacity can be reduced to exactly equal current attendee count."""
+    e = service.create_event(
+        EventCreate(
+            title="Equal Cap",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=5,
+        )
+    )
+    service.register(e.id, RegisterRequest(userId="u1"))
+    service.register(e.id, RegisterRequest(userId="u2"))
+
+    updated = service.update_event(
+        e.id,
+        EventUpdate(
+            title="Equal Cap",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=2,
+        ),
+    )
+    assert updated.max_capacity == 2
+    assert updated.remaining_capacity == 0
+    assert updated.status == "full"
+
+
+def test_update_event_increase_capacity_reopens_full_event(
+    service: EventService, fixed_now: datetime
+) -> None:
+    """CP03: Increasing capacity on a full event reopens status to upcoming."""
+    e = service.create_event(
+        EventCreate(
+            title="Full Reopen",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=1,
+        )
+    )
+    service.register(e.id, RegisterRequest(userId="u1"))
+    assert service.get_event(e.id).status == "full"
+
+    updated = service.update_event(
+        e.id,
+        EventUpdate(
+            title="Full Reopen",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=10,
+        ),
+    )
+    assert updated.status == "upcoming"
+    assert updated.remaining_capacity == 9
+
+
+def test_move_future_event_to_past(service: EventService, fixed_now: datetime) -> None:
+    """TM01: Moving event date to the past preserves attendees and sets status to past."""
+    e = service.create_event(
+        EventCreate(
+            title="Will Be Past",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=10,
+        )
+    )
+    service.register(e.id, RegisterRequest(userId="u1"))
+
+    updated = service.update_event(
+        e.id,
+        EventUpdate(
+            title="Now Past",
+            description="",
+            date=fixed_now - timedelta(days=1),
+            maxCapacity=10,
+        ),
+    )
+    assert updated.status == "past"
+    assert updated.registration_count == 1
+
+    # New registration rejected
+    with pytest.raises(EventStartedError):
+        service.register(e.id, RegisterRequest(userId="u2"))
+
+    # Existing attendee unregister allowed
+    service.unregister(e.id, "u1")
+    assert service.get_event(e.id).registration_count == 0
+
+
+def test_move_past_event_to_future(service: EventService, fixed_now: datetime) -> None:
+    """TM02: Moving past event to future reopens registration."""
+    e = service.create_event(
+        EventCreate(
+            title="Postponed",
+            description="",
+            date=fixed_now - timedelta(days=1),
+            maxCapacity=10,
+        )
+    )
+    assert service.get_event(e.id).status == "past"
+
+    updated = service.update_event(
+        e.id,
+        EventUpdate(
+            title="Rescheduled",
+            description="",
+            date=fixed_now + timedelta(days=5),
+            maxCapacity=10,
+        ),
+    )
+    assert updated.status == "upcoming"
+
+    # Registration now succeeds
+    res = service.register(e.id, RegisterRequest(userId="new-attendee"))
+    assert res.user_id == "new-attendee"
+
+
+def test_clock_advance_recomputes_status_without_write(
+    service: EventService, fixed_now: datetime
+) -> None:
+    """TM03: Status transitions from upcoming to past as clock advances without mutation."""
+    event_date = fixed_now + timedelta(hours=2)
+    e = service.create_event(
+        EventCreate(
+            title="Passive Clock",
+            description="",
+            date=event_date,
+            maxCapacity=10,
+        )
+    )
+    assert service.get_event(e.id).status == "upcoming"
+
+    # Advance clock past event date
+    service.clock = lambda: event_date + timedelta(seconds=1)
+    assert service.get_event(e.id).status == "past"
+
+
+def test_event_ordering_same_instant_uuid_tiebreak(
+    service: EventService, fixed_now: datetime
+) -> None:
+    """EV03: Events on identical date are deterministically ordered by UUID ascending."""
+    same_date = fixed_now + timedelta(days=5)
+    e1 = service.create_event(
+        EventCreate(title="E1", description="", date=same_date, maxCapacity=10)
+    )
+    e2 = service.create_event(
+        EventCreate(title="E2", description="", date=same_date, maxCapacity=10)
+    )
+
+    events = service.list_events().items
+    # Find e1 and e2 in listing
+    matched = [e for e in events if e.id in (e1.id, e2.id)]
+    expected_order = sorted([e1, e2], key=lambda x: str(x.id))
+    assert [e.id for e in matched] == [e.id for e in expected_order]
