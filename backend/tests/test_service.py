@@ -7,11 +7,14 @@ import pytest
 from pydantic import ValidationError
 
 from app.errors import (
+    AlreadyRegisteredError,
     CapacityBelowRegistrationsError,
+    EventFullError,
     EventNotFoundError,
+    EventStartedError,
 )
 from app.models import RegistrationRecord
-from app.schemas import EventCreate, EventUpdate
+from app.schemas import EventCreate, EventUpdate, RegisterRequest
 from app.service import EventService
 from app.store import EventStore
 
@@ -310,3 +313,164 @@ def test_schema_extra_fields_forbidden() -> None:
             maxCapacity=10,
             unexpectedField="surprise",
         )
+
+
+def test_register_success(service: EventService, fixed_now: datetime) -> None:
+    """Verify successful registration updates attendee count and capacity."""
+    e = service.create_event(
+        EventCreate(
+            title="Register Event",
+            description="",
+            date=fixed_now + timedelta(days=2),
+            maxCapacity=2,
+        )
+    )
+
+    reg = service.register(e.id, RegisterRequest(userId="  attendee-001  "))
+    assert reg.event_id == e.id
+    assert reg.user_id == "attendee-001"  # trimmed
+    assert reg.registered_at == fixed_now
+
+    updated = service.get_event(e.id)
+    assert updated.registration_count == 1
+    assert updated.remaining_capacity == 1
+    assert updated.status == "upcoming"
+
+
+def test_register_past_or_equal_time_rejection(service: EventService, fixed_now: datetime) -> None:
+    """Verify registration is rejected when event date <= now."""
+    past_e = service.create_event(
+        EventCreate(
+            title="Past",
+            description="",
+            date=fixed_now - timedelta(hours=1),
+            maxCapacity=10,
+        )
+    )
+    with pytest.raises(EventStartedError):
+        service.register(past_e.id, RegisterRequest(userId="user1"))
+
+    equal_e = service.create_event(
+        EventCreate(
+            title="Equal",
+            description="",
+            date=fixed_now,
+            maxCapacity=10,
+        )
+    )
+    with pytest.raises(EventStartedError):
+        service.register(equal_e.id, RegisterRequest(userId="user1"))
+
+
+def test_register_duplicate_rejection(service: EventService, fixed_now: datetime) -> None:
+    """Verify same user cannot register twice for same event, but can register for different events."""
+    e1 = service.create_event(
+        EventCreate(title="E1", description="", date=fixed_now + timedelta(days=1), maxCapacity=10)
+    )
+    e2 = service.create_event(
+        EventCreate(title="E2", description="", date=fixed_now + timedelta(days=1), maxCapacity=10)
+    )
+
+    service.register(e1.id, RegisterRequest(userId="user-alpha"))
+
+    # Same user on same event raises AlreadyRegisteredError
+    with pytest.raises(AlreadyRegisteredError):
+        service.register(e1.id, RegisterRequest(userId="user-alpha"))
+
+    # Same user on different event succeeds
+    reg2 = service.register(e2.id, RegisterRequest(userId="user-alpha"))
+    assert reg2.event_id == e2.id
+    assert reg2.user_id == "user-alpha"
+
+
+def test_register_capacity_limit(service: EventService, fixed_now: datetime) -> None:
+    """Verify registering past maxCapacity raises EventFullError."""
+    e = service.create_event(
+        EventCreate(
+            title="Cap 2",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=2,
+        )
+    )
+
+    service.register(e.id, RegisterRequest(userId="u1"))
+    service.register(e.id, RegisterRequest(userId="u2"))
+
+    event_full = service.get_event(e.id)
+    assert event_full.registration_count == 2
+    assert event_full.remaining_capacity == 0
+    assert event_full.status == "full"
+
+    with pytest.raises(EventFullError):
+        service.register(e.id, RegisterRequest(userId="u3"))
+
+
+def test_unregister_and_reregister(service: EventService, fixed_now: datetime) -> None:
+    """Verify unregistering frees capacity and allows re-registration."""
+    e = service.create_event(
+        EventCreate(
+            title="Unregister Test",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=1,
+        )
+    )
+
+    service.register(e.id, RegisterRequest(userId="u1"))
+    assert service.get_event(e.id).status == "full"
+
+    service.unregister(e.id, "u1")
+    assert service.get_event(e.id).registration_count == 0
+    assert service.get_event(e.id).status == "upcoming"
+
+    # Now u1 or another user can register
+    service.register(e.id, RegisterRequest(userId="u1"))
+    assert service.get_event(e.id).registration_count == 1
+
+
+def test_unregister_allowed_when_past(service: EventService, fixed_now: datetime) -> None:
+    """Verify unregistering is allowed even if the event has started or passed."""
+    e = service.create_event(
+        EventCreate(
+            title="Past Allowed Unreg",
+            description="",
+            date=fixed_now + timedelta(hours=1),
+            maxCapacity=10,
+        )
+    )
+    service.register(e.id, RegisterRequest(userId="u1"))
+
+    # Advance clock past event date
+    service.clock = lambda: fixed_now + timedelta(hours=2)
+
+    # Status is now past
+    assert service.get_event(e.id).status == "past"
+
+    # New registration rejected
+    with pytest.raises(EventStartedError):
+        service.register(e.id, RegisterRequest(userId="u2"))
+
+    # Unregistration succeeds
+    service.unregister(e.id, "u1")
+    assert service.get_event(e.id).registration_count == 0
+
+
+def test_unregister_absent_user_is_noop(service: EventService, fixed_now: datetime) -> None:
+    """Verify unregistering an absent user raises no exception if event exists."""
+    e = service.create_event(
+        EventCreate(
+            title="Noop Unreg",
+            description="",
+            date=fixed_now + timedelta(days=1),
+            maxCapacity=10,
+        )
+    )
+    # Should not raise
+    service.unregister(e.id, "non-existent-user")
+
+
+def test_unregister_missing_event_raises_not_found(service: EventService) -> None:
+    """Verify unregistering from a missing event raises EventNotFoundError."""
+    with pytest.raises(EventNotFoundError):
+        service.unregister(uuid4(), "user1")
