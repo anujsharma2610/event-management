@@ -38,6 +38,11 @@ This application fulfills all requirements of the Event Management assessment:
 | ![Form Light](docs/screenshots/event-form.png) |
 | ![Form Dark](docs/screenshots/event-form-dark.png) |
 
+| Welcome and Overview Screen (Light & Dark) |
+|---|
+| ![Welcome Light](docs/screenshots/redesign/welcome.png) |
+| ![Welcome Dark](docs/screenshots/redesign/welcome-dark.png) |
+
 ---
 
 ## Agent Readiness and Design System
@@ -48,6 +53,7 @@ The repository provides documentation tailored for human contributors and automa
 - [.agents/skills/event-management-quality/SKILL.md](.agents/skills/event-management-quality/SKILL.md): Local verification skill for validating business rules, concurrency race conditions, and appearance stability.
 - [docs/review-findings.md](docs/review-findings.md): Complete audit log and root cause disposition for issues F01 through F12.
 - [docs/product-scenario-audit.md](docs/product-scenario-audit.md): Capacity and pricing scenario audit covering required versus optional extensions.
+- [docs/design-research.md](docs/design-research.md): Verified Mobbin primary research logs, screen links, observations, and decisions across all targets.
 - [docs/scenario-coverage.md](docs/scenario-coverage.md): Comprehensive scenario coverage matrix mapping every edge case to its automated test proof.
 - [docs/decisions.md](docs/decisions.md): Architecture Decision Records (ADR-001 through ADR-007).
 
@@ -82,6 +88,7 @@ event-management/
 ├── docs/
 │   ├── decisions.md                    # Architecture Decision Records (ADR-001 to ADR-007)
 │   ├── demo.md                         # Detailed step-by-step demonstration walkthrough
+│   ├── design-research.md              # Verified Mobbin primary research logs & screen references
 │   ├── product-scenario-audit.md       # Capacity and pricing scenario classification audit
 │   ├── review-findings.md              # Review audit log for F01 to F12
 │   ├── scenario-coverage.md            # Evidence-backed scenario coverage matrix

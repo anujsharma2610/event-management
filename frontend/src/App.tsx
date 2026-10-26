@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 import { EventDetailPage } from './pages/EventDetailPage'
 import { EventFormPage } from './pages/EventFormPage'
 import { EventListPage } from './pages/EventListPage'
+import { WelcomePage } from './pages/WelcomePage'
 import { ThemePreference, useTheme } from './utils/theme'
 
 export const App: React.FC = () => {
@@ -59,6 +60,9 @@ export const App: React.FC = () => {
                 <Link to="/" className="nav-link">
                   Events
                 </Link>
+                <Link to="/welcome" className="nav-link">
+                  Guide
+                </Link>
                 <Link to="/events/new" className="btn btn-sm btn-primary">
                   + New Event
                 </Link>
@@ -73,6 +77,7 @@ export const App: React.FC = () => {
         <main className="app-main">
           <Routes>
             <Route path="/" element={<EventListPage />} />
+            <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/events/new" element={<EventFormPage />} />
             <Route path="/events/:id" element={<EventDetailPage />} />
             <Route path="/events/:id/edit" element={<EventFormPage />} />
